@@ -1,178 +1,206 @@
 `timescale 1ns/1ps
 
 module testbench_controller;
-  reg clk, reset, ZeroE, FlushE;
-  reg [6:0] opD;
-  reg [2:0] funct3D;
-  reg funct7b5D;
+  reg clk, reset, ZeroE;
+  reg [31:0] InstrD;
+  reg [4:0] Rs1E, Rs2E, RdE, RdM, RdW;
   wire [1:0] ImmSrcD, ResultSrcE, ResultSrcM, ResultSrcW;
+  wire [1:0] ForwardAE, ForwardBE;
   wire [2:0] ALUControlE;
   wire ALUSrcE, RegWriteE, JumpE, PCSrcE;
   wire MemWriteM, RegWriteM, RegWriteW;
-  integer errors;
+  wire StallF, StallD, FlushD, FlushE;
+  integer tests, errors;
 
   controller_pipeline dut(
     .clk(clk), .reset(reset),
-    .opD(opD), .funct3D(funct3D), .funct7b5D(funct7b5D),
-    .ZeroE(ZeroE), .FlushE(FlushE),
+    .opD(InstrD[6:0]), .funct3D(InstrD[14:12]),
+    .funct7b5D(InstrD[30]), .ZeroE(ZeroE),
+    .Rs1D(InstrD[19:15]), .Rs2D(InstrD[24:20]),
+    .Rs1E(Rs1E), .Rs2E(Rs2E),
+    .RdE(RdE), .RdM(RdM), .RdW(RdW),
     .ImmSrcD(ImmSrcD), .ALUSrcE(ALUSrcE),
     .ALUControlE(ALUControlE), .RegWriteE(RegWriteE),
     .ResultSrcE(ResultSrcE), .JumpE(JumpE), .PCSrcE(PCSrcE),
     .MemWriteM(MemWriteM), .RegWriteM(RegWriteM),
     .ResultSrcM(ResultSrcM), .RegWriteW(RegWriteW),
-    .ResultSrcW(ResultSrcW)
+    .ResultSrcW(ResultSrcW),
+    .ForwardAE(ForwardAE), .ForwardBE(ForwardBE),
+    .StallF(StallF), .StallD(StallD), .FlushD(FlushD), .FlushE(FlushE)
   );
 
   always #5 clk = ~clk;
 
+  // Simula los numeros de registro de las etapas
+  always @(posedge clk or posedge reset) begin
+    if (reset) begin
+      Rs1E <= 0;
+      Rs2E <= 0;
+      RdE <= 0;
+      RdM <= 0;
+      RdW <= 0;
+    end else begin
+      if (FlushE) begin
+        Rs1E <= 0;
+        Rs2E <= 0;
+        RdE <= 0;
+      end else begin
+        Rs1E <= InstrD[19:15];
+        Rs2E <= InstrD[24:20];
+        RdE <= InstrD[11:7];
+      end
+      RdM <= RdE;
+      RdW <= RdM;
+    end
+  end
+
+  // Comprueba una condicion
+  task check;
+    input passed;
+    begin
+      tests = tests + 1;
+      if (passed !== 1'b1) begin
+        errors = errors + 1;
+        $display("Error en comprobacion %0d", tests);
+      end
+    end
+  endtask
+
   initial begin
-    $dumpfile("controller.vcd");
-    $dumpvars(0, testbench_controller);
     clk = 0;
     reset = 1;
     ZeroE = 0;
-    FlushE = 0;
-    opD = 0;
-    funct3D = 0;
-    funct7b5D = 0;
+    InstrD = 0;
+    tests = 0;
     errors = 0;
 
-    // Comprueba el reset
+    // El reset limpia el control
     #2;
-    if ({RegWriteE, RegWriteM, RegWriteW, MemWriteM, PCSrcE} !== 5'b0) begin
-      $display("Error: reset");
-      errors = errors + 1;
-    end
+    check({RegWriteE, RegWriteM, RegWriteW, MemWriteM, PCSrcE} === 5'b0);
 
-    // addi entra a EX
+    // lw x5, 0(x0)
     @(negedge clk);
     reset = 0;
-    opD = 7'b0010011;
+    InstrD = 32'h00002283;
+    @(posedge clk); #1;
+    check((RegWriteE === 1'b1) && (ResultSrcE === 2'b01) &&
+          (ImmSrcD === 2'b00) && (RdE === 5'd5));
+
+    // add x6, x5, x5 necesita el dato de lw
+    @(negedge clk);
+    InstrD = 32'h00528333;
     #1;
-    if (ImmSrcD !== 2'b00) begin
-      $display("Error: inmediato addi");
-      errors = errors + 1;
-    end
-    @(posedge clk); #1;
-    if ({RegWriteE, ALUSrcE, ALUControlE, ResultSrcE} !== 7'b1_1_000_00) begin
-      $display("Error: addi en EX");
-      errors = errors + 1;
-    end
+    check({StallF, StallD, FlushD, FlushE} === 4'b1101);
 
-    // lw entra mientras addi avanza
-    @(negedge clk);
-    opD = 7'b0000011;
-    funct3D = 3'b010;
+    // FlushE limpia EX y deja avanzar a lw
     @(posedge clk); #1;
-    if ({RegWriteE, ResultSrcE, RegWriteM, ResultSrcM, RegWriteW}
-        !== 7'b1_01_1_00_0) begin
-      $display("Error: avance de addi y lw");
-      errors = errors + 1;
-    end
+    check((RegWriteE === 1'b0) && (RdE === 5'd0) &&
+          (RegWriteM === 1'b1) && (ResultSrcM === 2'b01) &&
+          (RdM === 5'd5) && (StallD === 1'b0));
 
-    // Una burbuja deja avanzar a lw
-    @(negedge clk);
-    opD = 7'b0100011;
-    FlushE = 1;
+    // Conserva ADD durante la pausa y luego usa WB
     @(posedge clk); #1;
-    if ({RegWriteE, JumpE, PCSrcE, RegWriteM, ResultSrcM, MemWriteM,
-         RegWriteW, ResultSrcW} !== 10'b0_0_0_1_01_0_1_00) begin
-      $display("Error: burbuja o avance de lw");
-      errors = errors + 1;
-    end
+    check((RegWriteE === 1'b1) && (ResultSrcE === 2'b00) &&
+          (RdW === 5'd5) && ({ForwardAE, ForwardBE} === 4'b0101));
 
-    // El store anulado no escribe
+    // sw x6, 0(x0) recibe su dato desde MEM
     @(negedge clk);
-    FlushE = 0;
-    opD = 0;
+    InstrD = 32'h00602023;
     @(posedge clk); #1;
-    if ({RegWriteM, MemWriteM, RegWriteW, ResultSrcW} !== 5'b0_0_1_01) begin
-      $display("Error: store anulado o lw en WB");
-      errors = errors + 1;
-    end
+    check((ForwardBE === 2'b10) && (ALUSrcE === 1'b1) &&
+          (ALUControlE === 3'b000) && (MemWriteM === 1'b0));
 
-    // Un store valido escribe en MEM
+    // La escritura se habilita al llegar a MEM
     @(negedge clk);
-    opD = 7'b0100011;
+    InstrD = 0;
     @(posedge clk); #1;
-    if (MemWriteM !== 1'b0) begin
-      $display("Error: store escribe antes de MEM");
-      errors = errors + 1;
-    end
-    @(negedge clk);
-    opD = 0;
-    @(posedge clk); #1;
-    if ({MemWriteM, RegWriteM} !== 2'b10) begin
-      $display("Error: store en MEM");
-      errors = errors + 1;
-    end
+    check((MemWriteM === 1'b1) && (RegWriteM === 1'b0) &&
+          (RegWriteW === 1'b1) && (ResultSrcW === 2'b00));
 
-    // beq usa el Zero de EX
+    // beq x0, x0, +8 con Zero simulado en cero
     @(negedge clk);
-    opD = 7'b1100011;
-    funct3D = 0;
+    InstrD = 32'h00000463;
+    ZeroE = 0;
+    @(posedge clk); #1;
+    check((PCSrcE === 1'b0) && (ALUControlE === 3'b001) &&
+          ({FlushD, FlushE} === 2'b00));
+
+    // Zero activa el salto y la limpieza
     ZeroE = 1;
     #1;
-    if (PCSrcE !== 1'b0) begin
-      $display("Error: branch decide desde ID");
-      errors = errors + 1;
-    end
+    check((PCSrcE === 1'b1) &&
+          ({StallF, StallD, FlushD, FlushE} === 4'b0011));
+
+    // Un store del camino incorrecto no entra a EX
+    @(negedge clk);
+    InstrD = 32'h00602223;
     @(posedge clk); #1;
-    if ({PCSrcE, ALUControlE} !== 4'b1_001) begin
-      $display("Error: beq tomado");
-      errors = errors + 1;
-    end
+    check((PCSrcE === 1'b0) && (RegWriteE === 1'b0) &&
+          (RdE === 5'b0) && (JumpE === 1'b0));
+
+    // Simula la limpieza de la instruccion en ID
+    @(negedge clk);
+    InstrD = 0;
     ZeroE = 0;
-    #1;
-    if (PCSrcE !== 1'b0) begin
-      $display("Error: beq no tomado");
-      errors = errors + 1;
-    end
-
-    // jal salta sin depender de Zero
-    @(negedge clk);
-    opD = 7'b1101111;
     @(posedge clk); #1;
-    if ({JumpE, PCSrcE, RegWriteE, ResultSrcE} !== 5'b1_1_1_10) begin
-      $display("Error: jal en EX");
-      errors = errors + 1;
-    end
+    check(MemWriteM === 1'b0);
 
-    // Anula el siguiente salto
+    // jal x7, +8 activa la limpieza
     @(negedge clk);
-    FlushE = 1;
+    InstrD = 32'h008003ef;
     @(posedge clk); #1;
-    if ({JumpE, PCSrcE, RegWriteE, RegWriteM, ResultSrcM} !== 6'b0_0_0_1_10) begin
-      $display("Error: salto anulado o jal en MEM");
-      errors = errors + 1;
-    end
-    @(negedge clk);
-    opD = 0;
-    FlushE = 0;
-    @(posedge clk); #1;
-    if ({RegWriteW, ResultSrcW} !== 3'b1_10) begin
-      $display("Error: jal en WB");
-      errors = errors + 1;
-    end
+    check((JumpE === 1'b1) && (PCSrcE === 1'b1) &&
+          (RegWriteE === 1'b1) && (ResultSrcE === 2'b10));
 
-    // Reset con instrucciones en curso
+    // Anula ADDI y conserva el JAL anterior
+    @(negedge clk);
+    InstrD = 32'h00100413;
+    @(posedge clk); #1;
+    check((RegWriteE === 1'b0) && (JumpE === 1'b0) &&
+          (RegWriteM === 1'b1) && (ResultSrcM === 2'b10));
+
+    // addi x8, x7, 1 selecciona el resultado de JAL
+    @(negedge clk);
+    InstrD = 32'h00138413;
+    @(posedge clk); #1;
+    check((ForwardAE === 2'b01) && (RegWriteW === 1'b1) &&
+          (ResultSrcW === 2'b10) && (RegWriteE === 1'b1));
+
+    // addi x9, x8, 1 usa forwarding de MEM
+    @(negedge clk);
+    InstrD = 32'h00140493;
+    @(posedge clk); #1;
+    check((ForwardAE === 2'b10) && (RdM === 5'd8));
+
+    // addi x9, x9, 1 vuelve a escribir x9
+    @(negedge clk);
+    InstrD = 32'h00148493;
+    @(posedge clk); #1;
+    check((ForwardAE === 2'b10) && (RdM === 5'd9));
+
+    // addi x10, x9, 1 debe elegir el x9 mas reciente
+    @(negedge clk);
+    InstrD = 32'h00148513;
+    @(posedge clk); #1;
+    check((RdM === 5'd9) && (RdW === 5'd9) &&
+          (ForwardAE === 2'b10));
+
+    // Reset durante la ejecucion
     reset = 1;
     #1;
-    if ({RegWriteE, RegWriteM, RegWriteW, MemWriteM, JumpE, PCSrcE} !== 6'b0) begin
-      $display("Error: reset durante ejecucion");
-      errors = errors + 1;
-    end
+    check({RegWriteE, RegWriteM, RegWriteW, MemWriteM,
+           PCSrcE, StallF, StallD, FlushD, FlushE} === 9'b0);
 
     if (errors == 0)
-      $display("Prueba del controller correcta");
+      $display("Controller y Hazard Unit: %0d comprobaciones correctas", tests);
     else
-      $display("Prueba del controller con %0d errores", errors);
+      $display("Controller y Hazard Unit: %0d errores", errors);
     $finish;
   end
 
   // Evita una espera sin fin
   initial begin
-    #1000;
+    #500;
     $display("Error: tiempo agotado");
     $finish;
   end

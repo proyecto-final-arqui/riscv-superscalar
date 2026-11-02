@@ -1,13 +1,13 @@
 # Control del pipeline - E1
 
-Esta carpeta contiene el control preparado para un pipeline Single-Issue de cinco etapas. Todavía falta conectarlo a un datapath con registros entre etapas y a la Hazard Unit. El avance Dual-Issue de src_files sigue usando su controller de un solo ciclo. Esta carpeta es un avance separado; no se ha conectado al procesador ni agregado al proyecto Vivado.
+Esta carpeta contiene el control preparado para un pipeline Single-Issue de cinco etapas. La Hazard Unit ya está instanciada dentro del controller. Todavía falta conectar este conjunto a un datapath con registros entre etapas. El avance Dual-Issue de src_files sigue usando su controller de un solo ciclo. Pipeline_E1 se mantiene separado y todavía no está conectado al datapath ni agregado al proyecto Vivado.
 
 ## Archivos
 
-- `controller_pipeline.v`: nuevo controller con decodificación en ID y registros de control para EX, MEM y WB. Resuelve BEQ/JAL en EX y recibe `FlushE`.
+- `controller_pipeline.v`: nuevo controller con decodificación en ID y registros de control para EX, MEM y WB. Resuelve BEQ/JAL en EX e instancia hazard_unit. Recibe los números de registros de las etapas y entrega forwarding, stalls y flushes.
 - `maindec.v`: copia adaptada del decodificador original. Los opcodes desconocidos desactivan el control. Para tipo R, ImmSrc vale 00 en lugar de xx; no se usa el inmediato en esas operaciones.
 - `aludec.v`: conserva las operaciones originales. La salida se declara como reg para asignarla directamente en el bloque combinacional; se elimina el registro intermedio. Comentarios cortos.
-- `testbench_controller.v`: prueba aislada del controller. Comprueba reset, avance entre etapas, cargas, stores, burbujas, BEQ y JAL. Genera controller.vcd al ejecutarse.
+- `testbench_controller.v`: prueba conjunta del controller y la Hazard Unit. Comprueba 18 condiciones de reset, Load-Use, forwarding, stores, BEQ y JAL. Simula los números de registro de las etapas, pero no incluye un datapath ni ejecuta operaciones sobre datos.
 
 ## Señales y conexión pendiente
 
@@ -31,15 +31,28 @@ El diseño supone memorias con el comportamiento de la base original, sin espera
 
 ## Prueba
 
-Compilar únicamente los cuatro archivos Verilog de esta carpeta para la prueba aislada. No mezclar los decodificadores de src_files y Pipeline_E1 en la misma compilación: tienen los mismos nombres de módulo. Para probar este controller en Vivado, usar un proyecto de simulación separado con estos cuatro archivos y seleccionar testbench_controller como módulo principal.
+Para esta prueba, compilar controller_pipeline.v, maindec.v, aludec.v, hazard_unit.v y testbench_controller.v. Usar testbench_controller como módulo principal. No mezclar los decodificadores de src_files y Pipeline_E1 en la misma compilación: tienen los mismos nombres de módulo.
 
 Si se utiliza Icarus Verilog, ejecutar desde esta carpeta:
 
 ```text
-iverilog -s testbench_controller -o controller_test controller_pipeline.v maindec.v aludec.v testbench_controller.v
+iverilog -s testbench_controller -o controller_test controller_pipeline.v maindec.v aludec.v hazard_unit.v testbench_controller.v
 vvp controller_test
 ```
 
-Resultado esperado: `Prueba del controller correcta`.
+Resultado esperado: `Controller y Hazard Unit: 18 comprobaciones correctas`.
 
-Estado: revisión estática realizada; simulación pendiente porque no se encontró un simulador Verilog disponible. Esta prueba no sustituye los cuatro programas completos exigidos para E1.
+Estado actualizado el 2 de noviembre de 2026: la prueba conjunta pasó sus 18 comprobaciones en Vivado Simulator 2025.2, con escala de simulación de 1ns/1ps. El resultado y las formas de onda se guardaron localmente en ../tmp/control_hazard_sim; no se incluyen en este repositorio. Esta prueba no sustituye los cuatro programas completos de E1 ni verifica un datapath.
+
+## Hazard Unit
+
+Se agregaron `hazard_unit.v` y `testbench_hazard.v` para el pipeline Single-Issue de E1. La prueba aislada pasó 33 casos en Vivado. [HAZARD.md](HAZARD.md) explica las entradas, salidas, resultados de simulación y las conexiones pendientes con el datapath. La conexión se realizó en el controller existente; no se creó un tercer módulo de conexión.
+
+
+## Cambio de interfaz del controller
+
+- Se agregaron las entradas Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM y RdW. Las proporcionará el datapath.
+- Se agregaron las salidas ForwardAE, ForwardBE, StallF, StallD y FlushD.
+- FlushE ahora es una salida, no una entrada. La genera la instancia interna de hazard_unit y el controller la utiliza para limpiar EX. No debe tener otro controlador externo.
+- hazard_unit.v sigue siendo un archivo separado y debe incluirse al compilar el controller. No hace falta instanciar otra Hazard Unit fuera de él.
+- Los archivos del datapath original y del repositorio de tu compañero no se modificaron.

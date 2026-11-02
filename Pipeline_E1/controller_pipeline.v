@@ -4,7 +4,12 @@ module controller_pipeline(
     input [2:0] funct3D,
     input funct7b5D,
     input ZeroE,
-    input FlushE,
+    input [4:0] Rs1D, Rs2D,
+    input [4:0] Rs1E, Rs2E,
+    input [4:0] RdE, RdM, RdW,
+    output [1:0] ForwardAE, ForwardBE,
+    output StallF, StallD,
+    output FlushD, FlushE,
     output [1:0] ImmSrcD,
     output reg ALUSrcE,
     output reg [2:0] ALUControlE,
@@ -100,4 +105,19 @@ module controller_pipeline(
       ResultSrcW <= ResultSrcM;
     end
   end
+
+  // Conecta la deteccion de hazards
+  hazard_unit hazard(
+    .opD(opD),
+    .Rs1D(Rs1D), .Rs2D(Rs2D),
+    .Rs1E(Rs1E), .Rs2E(Rs2E),
+    .RdE(RdE), .RdM(RdM), .RdW(RdW),
+    .RegWriteE(RegWriteE), .RegWriteM(RegWriteM),
+    .RegWriteW(RegWriteW),
+    .ResultSrcE(ResultSrcE), .ResultSrcM(ResultSrcM),
+    .PCSrcE(PCSrcE),
+    .ForwardAE(ForwardAE), .ForwardBE(ForwardBE),
+    .StallF(StallF), .StallD(StallD),
+    .FlushD(FlushD), .FlushE(FlushE)
+  );
 endmodule
