@@ -1,4 +1,4 @@
-module imem(input  [31:0] a,
+module imem_dual(input  [31:0] a,
             output [31:0] rd0, 
             output [31:0] rd1);
   

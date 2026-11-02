@@ -18,7 +18,7 @@ module top_dual(input         clk, reset,
     .ReadData(ReadData)
   );
  
-  imem imem(.a(PC), .rd0(Instr0), .rd1(Instr1));               // Dual Fetch
+  imem_dual imem(.a(PC), .rd0(Instr0), .rd1(Instr1));               // Dual Fetch
   dmem dmem(.clk(clk), .we(MemWrite), .a(DataAdr),
             .wd(WriteData), .rd(ReadData));                    // 1 solo puerto
 endmodule

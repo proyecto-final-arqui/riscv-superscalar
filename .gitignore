@@ -1,0 +1,11 @@
+# Archivos generados por Vivado
+*.jou
+*.log
+*.str
+*.wdb
+.Xil/
+project_1.sim/
+project_1.runs/
+project_1.gen/
+project_1.ip_user_files/
+project_1.cache/

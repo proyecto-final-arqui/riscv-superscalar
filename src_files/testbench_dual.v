@@ -1,4 +1,4 @@
-module testbench;
+module testbench_dual;
   reg          clk;
   reg          reset;
   wire [31:0]  WriteData;
@@ -6,7 +6,7 @@ module testbench;
   wire         MemWrite;
   
   // instantiate device to be tested
-  top dut(
+  top_dual dut(
     .clk(clk), 
     .reset(reset), 
     .WriteData(WriteData), 

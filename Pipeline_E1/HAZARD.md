@@ -1,6 +1,6 @@
 # Hazard Unit - E1
 
-La unidad corresponde al pipeline Single-Issue de cinco etapas. Es combinacional: toma las señales actuales y decide forwarding, pausas y limpieza. No necesita reloj ni reset propios. Ya está instanciada dentro de controller_pipeline.v. Todavía falta conectar las entradas y salidas del conjunto al datapath del pipeline.
+La unidad corresponde al pipeline Single-Issue de cinco etapas. Es combinacional: toma las señales actuales y decide forwarding, pausas y limpieza. No necesita reloj ni reset propios. Está instanciada dentro de controller_pipeline.v, que se conecta al datapath en riscv_pipeline.v.
 
 ## Archivos
 
@@ -47,19 +47,19 @@ Con memorias como las de la base, se espera una pausa de un ciclo. Cuando la ins
 
 Si PCSrcE vale 1, FlushD y FlushE valen 1. StallF y StallD valen 0 aunque coincida una condición de Load-Use. Así el PC puede recibir el destino del salto.
 
-FlushE ya está conectado internamente al bloque que limpia EX en el controller. También se expone como salida del controller para la futura limpieza de ID/EX. FlushD limpia IF/ID. La limpieza debe tener prioridad sobre conservar esos registros. El flush elimina las instrucciones jóvenes; no debe borrar el salto que avanza de EX a MEM ni las instrucciones anteriores.
+FlushE limpia tanto el control de EX en el controller como el registro ID/EX del datapath. FlushD limpia IF/ID. La limpieza debe tener prioridad sobre conservar esos registros. El flush elimina las instrucciones jóvenes; no debe borrar el salto que avanza de EX a MEM ni las instrucciones anteriores.
 
-## Conexiones que faltan en el datapath
+## Conexiones en el datapath
 
-1. Agregar registros IF/ID, ID/EX, EX/MEM y MEM/WB para datos, números de registro y las señales necesarias.
-2. Agregar los dos multiplexores de forwarding en EX. El del segundo registro debe ir antes del multiplexor que selecciona el inmediato con ALUSrcE.
-3. Guardar el segundo registro ya corregido por forwarding como dato del SW en EX/MEM. No usar el inmediato como dato a escribir.
-4. Usar operandos corregidos también para la comparación de BEQ.
-5. Transportar PC+4 hasta MEM y WB para JAL y seleccionar correctamente el dato que se reenvía.
-6. Conectar StallF, StallD, FlushD y FlushE a los registros correspondientes.
-7. Resolver la lectura en ID de un registro que se escribe en WB en el mismo ciclo. Una solución sencilla es seleccionar ResultW en ID cuando RegWriteW está activo, RdW no es cero y coincide con el registro leído. Ese bypass todavía no está implementado.
+Implementadas en `datapath_pipeline.v`:
 
-El controller ya contiene la instancia de hazard_unit. No se necesita otra instancia externa; las conexiones anteriores con el datapath siguen pendientes.
+1. Registros IF/ID (StallD, FlushD), ID/EX (FlushE), EX/MEM y MEM/WB. StallF conserva el PC.
+2. Multiplexores de forwarding en EX; el de rs2 va antes del multiplexor de ALUSrcE.
+3. El dato del SW es el segundo operando ya corregido por forwarding.
+4. BEQ compara los operandos ya corregidos.
+5. PC+4 llega hasta WB; desde MEM se reenvía PCPlus4M si la instrucción es JAL.
+6. El banco de registros escribe en el flanco de bajada, así ID lee en el mismo ciclo el dato que escribe WB.
+7. Si la instrucción no usa rs1 o rs2 (tipo I y J), ese campo pasa a EX como x0 para evitar forwarding innecesario.
 
 ## Prueba
 
