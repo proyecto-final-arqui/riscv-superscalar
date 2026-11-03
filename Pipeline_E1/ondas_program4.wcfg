@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="testbench_program4_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="testbench_program4" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="816,000 ps"></ZoomStartTime>
+      <ZoomEndTime time="815,989 ps"></ZoomEndTime>
+      <Cursor1Time time="816,000 ps"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="207"></NameColumnWidth>
+      <ValueColumnWidth column_width="95"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="28" />
+   <wvobject type="divider" fp_name="divider22">
+      <obj_property name="label">Reloj</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench_program4/clk" type="logic">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench_program4/reset" type="logic">
+      <obj_property name="ElementShortName">reset</obj_property>
+      <obj_property name="ObjectShortName">reset</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider25">
+      <obj_property name="label">Instruccion en cada etapa (00000000 = burbuja)</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench_program4/dut/rv/dp/PCF" type="array">
+      <obj_property name="ElementShortName">PCF[31:0]</obj_property>
+      <obj_property name="ObjectShortName">PCF[31:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench_program4/dut/rv/dp/InstrF" type="array">
+      <obj_property name="ElementShortName">InstrF[31:0]</obj_property>
+      <obj_property name="ObjectShortName">InstrF[31:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench_program4/dut/rv/dp/InstrD" type="array">
+      <obj_property name="ElementShortName">InstrD[31:0]</obj_property>
+      <obj_property name="ObjectShortName">InstrD[31:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench_program4/dut/rv/dp/InstrE" type="array">
+      <obj_property name="ElementShortName">InstrE[31:0]</obj_property>
+      <obj_property name="ObjectShortName">InstrE[31:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench_program4/dut/rv/dp/InstrM" type="array">
+      <obj_property name="ElementShortName">InstrM[31:0]</obj_property>
+      <obj_property name="ObjectShortName">InstrM[31:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench_program4/dut/rv/dp/InstrW" type="array">
+      <obj_property name="ElementShortName">InstrW[31:0]</obj_property>
+      <obj_property name="ObjectShortName">InstrW[31:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider32">
+      <obj_property name="label">Hazard Unit</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench_program4/dut/rv/c/StallF" type="logic">
+      <obj_property name="ElementShortName">StallF</obj_property>
+      <obj_property name="ObjectShortName">StallF</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench_program4/dut/rv/c/StallD" type="logic">
+      <obj_property name="ElementShortName">StallD</obj_property>
+      <obj_property name="ObjectShortName">StallD</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench_program4/dut/rv/c/FlushD" type="logic">
+      <obj_property name="ElementShortName">FlushD</obj_property>
+      <obj_property name="ObjectShortName">FlushD</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench_program4/dut/rv/c/FlushE" type="logic">
+      <obj_property name="ElementShortName">FlushE</obj_property>
+      <obj_property name="ObjectShortName">FlushE</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench_program4/dut/rv/c/ForwardAE" type="array">
+      <obj_property name="ElementShortName">ForwardAE[1:0]</obj_property>
+      <obj_property name="ObjectShortName">ForwardAE[1:0]</obj_property>
+      <obj_property name="Radix">BINARYRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench_program4/dut/rv/c/ForwardBE" type="array">
+      <obj_property name="ElementShortName">ForwardBE[1:0]</obj_property>
+      <obj_property name="ObjectShortName">ForwardBE[1:0]</obj_property>
+      <obj_property name="Radix">BINARYRADIX</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider39">
+      <obj_property name="label">Salto</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench_program4/dut/rv/c/PCSrcE" type="logic">
+      <obj_property name="ElementShortName">PCSrcE</obj_property>
+      <obj_property name="ObjectShortName">PCSrcE</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench_program4/dut/rv/dp/PCTargetE" type="array">
+      <obj_property name="ElementShortName">PCTargetE[31:0]</obj_property>
+      <obj_property name="ObjectShortName">PCTargetE[31:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider42">
+      <obj_property name="label">Escritura en registros</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench_program4/dut/rv/c/RegWriteW" type="logic">
+      <obj_property name="ElementShortName">RegWriteW</obj_property>
+      <obj_property name="ObjectShortName">RegWriteW</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench_program4/dut/rv/dp/RdW" type="array">
+      <obj_property name="ElementShortName">RdW[4:0]</obj_property>
+      <obj_property name="ObjectShortName">RdW[4:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench_program4/dut/rv/dp/ResultW" type="array">
+      <obj_property name="ElementShortName">ResultW[31:0]</obj_property>
+      <obj_property name="ObjectShortName">ResultW[31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider46">
+      <obj_property name="label">Memoria de datos</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench_program4/dut/rv/c/MemWriteM" type="logic">
+      <obj_property name="ElementShortName">MemWriteM</obj_property>
+      <obj_property name="ObjectShortName">MemWriteM</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench_program4/dut/rv/dp/ALUResultM" type="array">
+      <obj_property name="ElementShortName">ALUResultM[31:0]</obj_property>
+      <obj_property name="ObjectShortName">ALUResultM[31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench_program4/dut/rv/dp/WriteDataM" type="array">
+      <obj_property name="ElementShortName">WriteDataM[31:0]</obj_property>
+      <obj_property name="ObjectShortName">WriteDataM[31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+</wave_config>
