@@ -1,16 +1,17 @@
 `timescale 1ns/1ps
 
 // Ejecuta un programa en el pipeline Single-Issue y en el Dual-Issue
-// preliminar con el mismo reloj, y compara registros y memoria al final
+// con el mismo reloj, y compara registros y memoria al final
 module comparar #(parameter MEMFILE = "program1.mem",
-                         parameter TRACE = 0) (
+                  parameter TRACE = 0) (
     output reg done,
     output reg [31:0] errors
 );
   reg clk, reset;
   wire [31:0] WriteData_s, DataAdr_s, WriteData_d, DataAdr_d;
   wire MemWrite_s, MemWrite_d;
-  integer i, cycles, pairs, regroups, lane1_writes;
+  integer i, cycles, end_s, end_d, dual_cycles, regroups;
+  integer dual_hist[0:127], regroup_hist[0:127];
 
   top_pipeline #(.MEMFILE(MEMFILE)) single(
     .clk(clk), .reset(reset),
@@ -24,30 +25,34 @@ module comparar #(parameter MEMFILE = "program1.mem",
 
   always #5 clk = ~clk;
 
-  // Evidencia de Dual Fetch y Dual Decode
   always @(posedge clk) begin
     if (!reset) begin
       cycles = cycles + 1;
-      if (dual.rv.dp.ValidD) pairs = pairs + 1;
-      if (dual.rv.dp.ValidD && !dual.rv.dp.LoadPairD && !dual.rv.c.StallD)
-        regroups = regroups + 1;
-      if (dual.rv.c.RegWriteW_1) lane1_writes = lane1_writes + 1;
 
-      // El store debe salir en el mismo ciclo en las dos arquitecturas
-      if (MemWrite_s !== MemWrite_d ||
-          (MemWrite_s && (DataAdr_s !== DataAdr_d || WriteData_s !== WriteData_d))) begin
-        errors = errors + 1;
-        $display("%0s %0t: store distinto (single %0d<-%0d, dual %0d<-%0d)",
-                 MEMFILE, $time, DataAdr_s, WriteData_s, DataAdr_d, WriteData_d);
-      end
+      // Ciclo de la ultima escritura util (registro distinto de x0 o memoria)
+      if ((single.rv.c.RegWriteW && single.rv.dp.RdW != 0) || MemWrite_s)
+        end_s = cycles;
+      if ((dual.rv.c.RegWriteW_0 && dual.rv.dp.RdW_0 != 0) ||
+          (dual.rv.c.RegWriteW_1 && dual.rv.dp.RdW_1 != 0) || MemWrite_d)
+        end_d = cycles;
+
+      // Emision doble: las dos instrucciones del par salen juntas
+      if (dual.rv.c.Issue1D && !dual.rv.c.FlushD)
+        dual_cycles = dual_cycles + 1;
+      // Emision parcial: la joven se queda y se reagrupa
+      if (dual.rv.dp.ValidD && !dual.rv.dp.LoadPairD &&
+          !dual.rv.c.StallD && !dual.rv.c.FlushD)
+        regroups = regroups + 1;
+
+      dual_hist[cycles] = dual_cycles;
+      regroup_hist[cycles] = regroups;
 
       if (TRACE)
-        $display("%4d | IF PC=%3d I0=%h I1=%h | ID PC=%3d I0=%h I1=%h | dec0 RW=%b ALU=%b imm=%b | dec1 RW=%b ALU=%b imm=%b | issue1=%b",
-                 cycles, dual.rv.dp.PCF, dual.rv.dp.InstrF_0, dual.rv.dp.InstrF_1,
-                 dual.rv.dp.PCD, dual.rv.dp.InstrD_0, dual.rv.dp.InstrD_1,
-                 dual.rv.c.RegWriteD_0, dual.rv.c.ALUControlD_0, dual.rv.c.ImmSrcD_0,
-                 dual.rv.c.RegWriteD_1, dual.rv.c.ALUControlD_1, dual.rv.c.ImmSrcD_1,
-                 dual.rv.c.Issue1D);
+        $display("%4d | ID PC=%3d I0=%h I1=%h | issue1=%b stall=%b flush=%b | fwd0=%b/%b fwd1=%b/%b",
+                 cycles, dual.rv.dp.PCD, dual.rv.dp.InstrD_0, dual.rv.dp.InstrD_1,
+                 dual.rv.c.Issue1D, dual.rv.c.StallD, dual.rv.c.FlushD,
+                 dual.rv.c.ForwardAE_0, dual.rv.c.ForwardBE_0,
+                 dual.rv.c.ForwardAE_1, dual.rv.c.ForwardBE_1);
     end
   end
 
@@ -57,9 +62,10 @@ module comparar #(parameter MEMFILE = "program1.mem",
     done = 0;
     errors = 0;
     cycles = 0;
-    pairs = 0;
+    end_s = 0;
+    end_d = 0;
+    dual_cycles = 0;
     regroups = 0;
-    lane1_writes = 0;
 
     #22 reset = 0;
     repeat (80) @(posedge clk);
@@ -78,34 +84,31 @@ module comparar #(parameter MEMFILE = "program1.mem",
                  $signed(dual.dmem.RAM[i]), $signed(single.dmem.RAM[i]));
       end
 
-    // En E1 la via 1 no emite: nunca debe escribir
-    if (lane1_writes != 0) begin
-      errors = errors + 1;
-      $display("%0s: la via 1 escribio %0d veces", MEMFILE, lane1_writes);
-    end
-
-    $display("%0s: %0d ciclos, %0d con par en ID, %0d reagrupamientos, %0s",
-             MEMFILE, cycles, pairs, regroups,
-             errors == 0 ? "IGUAL AL SINGLE-ISSUE" : "DIFERENTE");
+    // Solo cuenta lo emitido hasta el final del programa: una instruccion
+    // pasa de ID a WB en 3 ciclos
+    $display("%0s: single %0d ciclos, dual %0d ciclos | %0d emisiones dobles, %0d reagrupamientos | %0s",
+             MEMFILE, end_s, end_d, dual_hist[end_d - 3], regroup_hist[end_d - 3],
+             errors == 0 ? "MISMO RESULTADO" : "DIFERENTE");
     done = 1;
   end
 endmodule
 
 module tb_dual;
-  wire done1, done2, done3, done4;
-  wire [31:0] err1, err2, err3, err4;
+  wire done1, done2, done3, done4, done5;
+  wire [31:0] err1, err2, err3, err4, err5;
 
-  comparar #(.MEMFILE("program1.mem"), .TRACE(1)) p1(.done(done1), .errors(err1));
+  comparar #(.MEMFILE("program1.mem")) p1(.done(done1), .errors(err1));
   comparar #(.MEMFILE("program2.mem")) p2(.done(done2), .errors(err2));
   comparar #(.MEMFILE("program3.mem")) p3(.done(done3), .errors(err3));
   comparar #(.MEMFILE("program4.mem")) p4(.done(done4), .errors(err4));
+  comparar #(.MEMFILE("program5.mem"), .TRACE(1)) p5(.done(done5), .errors(err5));
 
   initial begin
-    wait (done1 && done2 && done3 && done4);
-    if (err1 + err2 + err3 + err4 == 0)
-      $display("DUAL E1: CORRECTO en los 4 programas");
+    wait (done1 && done2 && done3 && done4 && done5);
+    if (err1 + err2 + err3 + err4 + err5 == 0)
+      $display("DUAL: CORRECTO en los 5 programas");
     else
-      $display("DUAL E1: %0d ERRORES", err1 + err2 + err3 + err4);
+      $display("DUAL: %0d ERRORES", err1 + err2 + err3 + err4 + err5);
     $finish;
   end
 endmodule
