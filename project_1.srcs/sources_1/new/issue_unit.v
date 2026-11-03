@@ -5,7 +5,7 @@ module issue_unit(input  [31:0] Instr0, Instr1,
                   input         RegWrite0, PCSrc0,
                   input         Mem0, Mem1,
                   output        Issue1);
- 
+
   wire [4:0] rd0   = Instr0[11:7];
   wire [4:0] rs1_1 = Instr1[19:15];
   wire [4:0] rs2_1 = Instr1[24:20];

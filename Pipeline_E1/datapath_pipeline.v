@@ -34,6 +34,8 @@ module datapath_pipeline(
   reg [31:0] PCPlus4M;
   reg [31:0] ALUResultW, ReadDataW, PCPlus4W;
   reg [31:0] ResultW;
+  // Solo para depurar: instruccion que esta en cada etapa (0 = burbuja)
+  reg [31:0] InstrE, InstrM, InstrW;
 
   // ============================ IF ============================
   assign PCPlus4F = PCF + 4;
@@ -97,6 +99,7 @@ module datapath_pipeline(
       Rs1E <= 0;
       Rs2E <= 0;
       RdE <= 0;
+      InstrE <= 0;
     end else if (FlushE) begin
       RD1E <= 0;
       RD2E <= 0;
@@ -106,6 +109,7 @@ module datapath_pipeline(
       Rs1E <= 0;
       Rs2E <= 0;
       RdE <= 0;
+      InstrE <= 0;
     end else begin
       RD1E <= RD1D;
       RD2E <= RD2D;
@@ -115,6 +119,7 @@ module datapath_pipeline(
       Rs1E <= UsesRs1D ? InstrD[19:15] : 5'd0;
       Rs2E <= UsesRs2D ? InstrD[24:20] : 5'd0;
       RdE <= InstrD[11:7];
+      InstrE <= InstrD;
     end
   end
 
@@ -155,11 +160,13 @@ module datapath_pipeline(
       WriteDataM <= 0;
       PCPlus4M <= 0;
       RdM <= 0;
+      InstrM <= 0;
     end else begin
       ALUResultM <= ALUResultE;
       WriteDataM <= WriteDataE;
       PCPlus4M <= PCPlus4E;
       RdM <= RdE;
+      InstrM <= InstrE;
     end
   end
 
@@ -170,11 +177,13 @@ module datapath_pipeline(
       ReadDataW <= 0;
       PCPlus4W <= 0;
       RdW <= 0;
+      InstrW <= 0;
     end else begin
       ALUResultW <= ALUResultM;
       ReadDataW <= ReadDataM;
       PCPlus4W <= PCPlus4M;
       RdW <= RdM;
+      InstrW <= InstrM;
     end
   end
 
