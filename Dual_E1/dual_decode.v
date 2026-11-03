@@ -2,10 +2,10 @@ module dual_decode(
     input clk, reset,
     input [31:0] InstrD_0, InstrD_1,
     input ZeroE_0,
-    input [4:0] Rs1E, Rs2E,
-    input [4:0] RdE_0, RdM_0, RdW_0,
+    input [4:0] Rs1E_0, Rs2E_0, Rs1E_1, Rs2E_1,
+    input [4:0] RdE_0, RdM_0, RdW_0, RdM_1, RdW_1,
     output Issue1D,
-    output [1:0] ForwardAE, ForwardBE,
+    output [2:0] ForwardAE_0, ForwardBE_0, ForwardAE_1, ForwardBE_1,
     output StallF, StallD,
     output FlushD, FlushE,
     output [1:0] ImmSrcD_0, ImmSrcD_1,
@@ -71,9 +71,15 @@ module dual_decode(
     .ALUControl(ALUControlD_1)
   );
 
-  // E1: la via 1 todavia no emite; la instruccion joven se reagrupa y
-  // sale por la via 0 en el ciclo siguiente. En E2 aqui entra la Issue Unit
-  assign Issue1D = 1'b0;
+  // Decide si I1 sale junto con I0. Si no sale, se reagrupa y
+  // sale por la via 0 en el ciclo siguiente
+  dual_issue issue(
+    .InstrD_0(InstrD_0), .InstrD_1(InstrD_1),
+    .RegWriteD_0(RegWriteD_0), .BranchD_0(BranchD_0), .JumpD_0(JumpD_0),
+    .StallD(StallD),
+    .RegWriteE_0(RegWriteE_0), .ResultSrcE_0(ResultSrcE_0), .RdE_0(RdE_0),
+    .Issue1D(Issue1D)
+  );
 
   // ===================== Control de EX ========================
   always @(posedge clk or posedge reset) begin
@@ -168,17 +174,21 @@ module dual_decode(
     end
   end
 
-  // Hazard Unit del pipeline original, aplicada a la via 0
-  hazard_unit hazard(
+  // Forwarding entre las dos vias, Load-Use y saltos
+  dual_hazard hazard(
     .opD(InstrD_0[6:0]),
     .Rs1D(InstrD_0[19:15]), .Rs2D(InstrD_0[24:20]),
-    .Rs1E(Rs1E), .Rs2E(Rs2E),
-    .RdE(RdE_0), .RdM(RdM_0), .RdW(RdW_0),
-    .RegWriteE(RegWriteE_0), .RegWriteM(RegWriteM_0),
-    .RegWriteW(RegWriteW_0),
-    .ResultSrcE(ResultSrcE_0), .ResultSrcM(ResultSrcM_0),
+    .Rs1E_0(Rs1E_0), .Rs2E_0(Rs2E_0),
+    .Rs1E_1(Rs1E_1), .Rs2E_1(Rs2E_1),
+    .RdE_0(RdE_0), .RdM_0(RdM_0), .RdW_0(RdW_0),
+    .RdM_1(RdM_1), .RdW_1(RdW_1),
+    .RegWriteE_0(RegWriteE_0), .RegWriteM_0(RegWriteM_0),
+    .RegWriteW_0(RegWriteW_0),
+    .RegWriteM_1(RegWriteM_1), .RegWriteW_1(RegWriteW_1),
+    .ResultSrcE_0(ResultSrcE_0), .ResultSrcM_0(ResultSrcM_0),
     .PCSrcE(PCSrcE),
-    .ForwardAE(ForwardAE), .ForwardBE(ForwardBE),
+    .ForwardAE_0(ForwardAE_0), .ForwardBE_0(ForwardBE_0),
+    .ForwardAE_1(ForwardAE_1), .ForwardBE_1(ForwardBE_1),
     .StallF(StallF), .StallD(StallD),
     .FlushD(FlushD), .FlushE(FlushE)
   );

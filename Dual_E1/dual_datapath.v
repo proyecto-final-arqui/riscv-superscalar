@@ -1,26 +1,21 @@
 module dual_datapath(
     input clk, reset,
-    // Control de ID
     input [1:0] ImmSrcD_0, ImmSrcD_1,
     input Issue1D,
-    // Control de EX
     input ALUSrcE_0, ALUSrcE_1,
     input [2:0] ALUControlE_0, ALUControlE_1,
     output ZeroE_0, ZeroE_1,
     output [31:0] PCTargetE,
     input PCSrcE,
-    // Control de MEM y WB
     input [1:0] ResultSrcM_0,
     input MemSelM,
     input RegWriteW_0, RegWriteW_1,
     input [1:0] ResultSrcW_0, ResultSrcW_1,
-    // Hazard Unit (via 0)
     input StallF, StallD, FlushD, FlushE,
-    input [1:0] ForwardAE, ForwardBE,
+    input [2:0] ForwardAE_0, ForwardBE_0, ForwardAE_1, ForwardBE_1,
     output [31:0] InstrD_0, InstrD_1,
-    output reg [4:0] Rs1E, Rs2E, RdE_0,
-    output reg [4:0] RdM_0, RdW_0,
-    // Memorias: imem de dos lecturas y dmem de un solo puerto
+    output reg [4:0] Rs1E_0, Rs2E_0, Rs1E_1, Rs2E_1, RdE_0,
+    output reg [4:0] RdM_0, RdW_0, RdM_1, RdW_1,
     output reg [31:0] PCF,
     input [31:0] InstrF_0, InstrF_1,
     output [31:0] DataAdrM, WriteDataM,
@@ -38,17 +33,15 @@ module dual_datapath(
   reg [31:0] RD1E_0, RD2E_0, PCE_0, ImmExtE_0, PCPlus4E_0;
   reg [31:0] RD1E_1, RD2E_1, ImmExtE_1, PCPlus4E_1;
   reg [4:0] RdE_1;
-  reg [31:0] SrcAE_0, WriteDataE_0;
+  reg [31:0] SrcAE_0, WriteDataE_0, SrcAE_1, WriteDataE_1;
   wire [31:0] SrcBE_0, ALUResultE_0, ForwardM_0;
-  wire [31:0] SrcAE_1, WriteDataE_1, SrcBE_1, ALUResultE_1;
+  wire [31:0] SrcBE_1, ALUResultE_1;
 
   reg [31:0] ALUResultM_0, WriteDataM_0, PCPlus4M_0;
   reg [31:0] ALUResultM_1, WriteDataM_1, PCPlus4M_1;
-  reg [4:0] RdM_1;
 
   reg [31:0] ALUResultW_0, ReadDataW_0, PCPlus4W_0;
   reg [31:0] ALUResultW_1, ReadDataW_1, PCPlus4W_1;
-  reg [4:0] RdW_1;
   reg [31:0] ResultW_0, ResultW_1;
 
   // ============================ IF ============================
@@ -127,6 +120,7 @@ module dual_datapath(
   wire UsesRs2D_0 = (InstrD_0[6:0] == 7'b0110011) ||
                     (InstrD_0[6:0] == 7'b0100011) ||
                     (InstrD_0[6:0] == 7'b1100011);
+  wire UsesRs2D_1 = (InstrD_1[6:0] == 7'b0110011);
 
   // ======================= ID/EX via 0 ========================
   // FlushE inserta una burbuja
@@ -137,8 +131,8 @@ module dual_datapath(
       PCE_0 <= 0;
       ImmExtE_0 <= 0;
       PCPlus4E_0 <= 0;
-      Rs1E <= 0;
-      Rs2E <= 0;
+      Rs1E_0 <= 0;
+      Rs2E_0 <= 0;
       RdE_0 <= 0;
     end else if (FlushE) begin
       RD1E_0 <= 0;
@@ -146,8 +140,8 @@ module dual_datapath(
       PCE_0 <= 0;
       ImmExtE_0 <= 0;
       PCPlus4E_0 <= 0;
-      Rs1E <= 0;
-      Rs2E <= 0;
+      Rs1E_0 <= 0;
+      Rs2E_0 <= 0;
       RdE_0 <= 0;
     end else begin
       RD1E_0 <= RD1D_0;
@@ -155,8 +149,8 @@ module dual_datapath(
       PCE_0 <= PCD;
       ImmExtE_0 <= ImmExtD_0;
       PCPlus4E_0 <= PCPlus4D_0;
-      Rs1E <= UsesRs1D_0 ? InstrD_0[19:15] : 5'd0;
-      Rs2E <= UsesRs2D_0 ? InstrD_0[24:20] : 5'd0;
+      Rs1E_0 <= UsesRs1D_0 ? InstrD_0[19:15] : 5'd0;
+      Rs2E_0 <= UsesRs2D_0 ? InstrD_0[24:20] : 5'd0;
       RdE_0 <= InstrD_0[11:7];
     end
   end
@@ -169,40 +163,69 @@ module dual_datapath(
       RD2E_1 <= 0;
       ImmExtE_1 <= 0;
       PCPlus4E_1 <= 0;
+      Rs1E_1 <= 0;
+      Rs2E_1 <= 0;
       RdE_1 <= 0;
     end else if (FlushE || !Issue1D) begin
       RD1E_1 <= 0;
       RD2E_1 <= 0;
       ImmExtE_1 <= 0;
       PCPlus4E_1 <= 0;
+      Rs1E_1 <= 0;
+      Rs2E_1 <= 0;
       RdE_1 <= 0;
     end else begin
       RD1E_1 <= RD1D_1;
       RD2E_1 <= RD2D_1;
       ImmExtE_1 <= ImmExtD_1;
       PCPlus4E_1 <= PCPlus4D_1;
+      Rs1E_1 <= InstrD_1[19:15];
+      Rs2E_1 <= UsesRs2D_1 ? InstrD_1[24:20] : 5'd0;
       RdE_1 <= InstrD_1[11:7];
     end
   end
 
-  // ========================= EX via 0 =========================
-  // JAL reenvia PC+4 desde MEM; el resto reenvia el resultado de la ALU
+  // ======================== Forwarding ========================
+  // JAL reenvia PC+4 desde MEM; el resto reenvia el resultado de la ALU.
+  // La via 1 solo ejecuta operaciones ALU
   assign ForwardM_0 = (ResultSrcM_0 == 2'b10) ? PCPlus4M_0 : ALUResultM_0;
 
-  // 00: registro, 01: WB, 10: MEM
+  // 000: registro, 001: WB via 0, 010: WB via 1, 011: MEM via 0, 100: MEM via 1
   always @* begin
-    case (ForwardAE)
-      2'b01: SrcAE_0 = ResultW_0;
-      2'b10: SrcAE_0 = ForwardM_0;
+    case (ForwardAE_0)
+      3'b001: SrcAE_0 = ResultW_0;
+      3'b010: SrcAE_0 = ResultW_1;
+      3'b011: SrcAE_0 = ForwardM_0;
+      3'b100: SrcAE_0 = ALUResultM_1;
       default: SrcAE_0 = RD1E_0;
     endcase
 
-    case (ForwardBE)
-      2'b01: WriteDataE_0 = ResultW_0;
-      2'b10: WriteDataE_0 = ForwardM_0;
+    case (ForwardBE_0)
+      3'b001: WriteDataE_0 = ResultW_0;
+      3'b010: WriteDataE_0 = ResultW_1;
+      3'b011: WriteDataE_0 = ForwardM_0;
+      3'b100: WriteDataE_0 = ALUResultM_1;
       default: WriteDataE_0 = RD2E_0;
     endcase
+
+    case (ForwardAE_1)
+      3'b001: SrcAE_1 = ResultW_0;
+      3'b010: SrcAE_1 = ResultW_1;
+      3'b011: SrcAE_1 = ForwardM_0;
+      3'b100: SrcAE_1 = ALUResultM_1;
+      default: SrcAE_1 = RD1E_1;
+    endcase
+
+    case (ForwardBE_1)
+      3'b001: WriteDataE_1 = ResultW_0;
+      3'b010: WriteDataE_1 = ResultW_1;
+      3'b011: WriteDataE_1 = ForwardM_0;
+      3'b100: WriteDataE_1 = ALUResultM_1;
+      default: WriteDataE_1 = RD2E_1;
+    endcase
   end
+
+  // ========================= EX via 0 =========================
 
   // El inmediato se elige despues del forwarding
   assign SrcBE_0 = ALUSrcE_0 ? ImmExtE_0 : WriteDataE_0;
@@ -217,10 +240,6 @@ module dual_datapath(
   assign PCTargetE = PCE_0 + ImmExtE_0;
 
   // ========================= EX via 1 =========================
-  // Preliminar: lee los operandos del banco sin forwarding.
-  // En E2 aqui entran los multiplexores de forwarding entre vias
-  assign SrcAE_1 = RD1E_1;
-  assign WriteDataE_1 = RD2E_1;
   assign SrcBE_1 = ALUSrcE_1 ? ImmExtE_1 : WriteDataE_1;
 
   alu alu_1(

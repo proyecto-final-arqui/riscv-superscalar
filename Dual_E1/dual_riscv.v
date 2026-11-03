@@ -8,10 +8,11 @@ module dual_riscv(
 );
 
   wire [31:0] InstrD_0, InstrD_1, PCTargetE;
-  wire [4:0] Rs1E, Rs2E, RdE_0, RdM_0, RdW_0;
+  wire [4:0] Rs1E_0, Rs2E_0, Rs1E_1, Rs2E_1;
+  wire [4:0] RdE_0, RdM_0, RdW_0, RdM_1, RdW_1;
   wire [1:0] ImmSrcD_0, ImmSrcD_1;
   wire [1:0] ResultSrcM_0, ResultSrcW_0, ResultSrcW_1;
-  wire [1:0] ForwardAE, ForwardBE;
+  wire [2:0] ForwardAE_0, ForwardBE_0, ForwardAE_1, ForwardBE_1;
   wire [2:0] ALUControlE_0, ALUControlE_1;
   wire ALUSrcE_0, ALUSrcE_1, ZeroE_0, ZeroE_1, PCSrcE;
   wire Issue1D, MemSelM, RegWriteW_0, RegWriteW_1;
@@ -21,10 +22,13 @@ module dual_riscv(
     .clk(clk), .reset(reset),
     .InstrD_0(InstrD_0), .InstrD_1(InstrD_1),
     .ZeroE_0(ZeroE_0),
-    .Rs1E(Rs1E), .Rs2E(Rs2E),
+    .Rs1E_0(Rs1E_0), .Rs2E_0(Rs2E_0),
+    .Rs1E_1(Rs1E_1), .Rs2E_1(Rs2E_1),
     .RdE_0(RdE_0), .RdM_0(RdM_0), .RdW_0(RdW_0),
+    .RdM_1(RdM_1), .RdW_1(RdW_1),
     .Issue1D(Issue1D),
-    .ForwardAE(ForwardAE), .ForwardBE(ForwardBE),
+    .ForwardAE_0(ForwardAE_0), .ForwardBE_0(ForwardBE_0),
+    .ForwardAE_1(ForwardAE_1), .ForwardBE_1(ForwardBE_1),
     .StallF(StallF), .StallD(StallD),
     .FlushD(FlushD), .FlushE(FlushE),
     .ImmSrcD_0(ImmSrcD_0), .ImmSrcD_1(ImmSrcD_1),
@@ -50,10 +54,12 @@ module dual_riscv(
     .ResultSrcW_0(ResultSrcW_0), .ResultSrcW_1(ResultSrcW_1),
     .StallF(StallF), .StallD(StallD),
     .FlushD(FlushD), .FlushE(FlushE),
-    .ForwardAE(ForwardAE), .ForwardBE(ForwardBE),
+    .ForwardAE_0(ForwardAE_0), .ForwardBE_0(ForwardBE_0),
+    .ForwardAE_1(ForwardAE_1), .ForwardBE_1(ForwardBE_1),
     .InstrD_0(InstrD_0), .InstrD_1(InstrD_1),
-    .Rs1E(Rs1E), .Rs2E(Rs2E), .RdE_0(RdE_0),
-    .RdM_0(RdM_0), .RdW_0(RdW_0),
+    .Rs1E_0(Rs1E_0), .Rs2E_0(Rs2E_0),
+    .Rs1E_1(Rs1E_1), .Rs2E_1(Rs2E_1), .RdE_0(RdE_0),
+    .RdM_0(RdM_0), .RdW_0(RdW_0), .RdM_1(RdM_1), .RdW_1(RdW_1),
     .PCF(PCF), .InstrF_0(InstrF_0), .InstrF_1(InstrF_1),
     .DataAdrM(DataAdrM), .WriteDataM(WriteDataM),
     .ReadDataM(ReadDataM)
