@@ -14,6 +14,7 @@ Pipeline de cinco etapas con dos vías que emite hasta dos instrucciones por cic
 | `dual_datapath.v` | IF/ID con dos instrucciones, dos `extend`, registros de pipeline de las dos vías, dos ALU, un puerto de memoria y dos escrituras en WB. |
 | `dual_riscv.v`, `dual_top.v` | Conexión del procesador y de las memorias. |
 | `tb_dual.v` | Ejecuta los programas 1 a 6 en el Single-Issue y en el Dual a la vez, compara registros y memoria, y mide los ciclos. |
+| `tb_orden.v` | Ejecuta los programas 1 a 6 en las dos arquitecturas y compara la secuencia de instrucciones (PC y palabra) que pasan de EX a MEM. Demuestra que el reagrupamiento respeta el orden del programa y que no se pierden ni se duplican instrucciones. Con `TRACE(1)` muestra qué sale por cada vía en cada ciclo. |
 
 `Pipeline_E1/program5.mem` y `Pipeline_E1/program6.mem` prueban los casos de dos vías. El 6 cubre memoria en las dos posiciones del par, el conflicto del puerto de memoria y saltos en la primera y segunda posición, tomados y no tomados.
 
@@ -66,7 +67,7 @@ La prioridad sigue el orden de la tabla, de 100 a 001: gana el productor más jo
 | 2 - Forwarding | 24 | 20 | 6 |
 | 3 - Stalling | 33 | 26 | 9 |
 | 4 - Flushing | 44 | 37 | 10 |
-| 5 - Dual | 39 | 30 | 11 |
+| 5 - Dual | 43 | 32 | 13 |
 | 6 - Memoria y saltos en las dos vías | 32 | 23 | 10 |
 
 Los ciclos se cuentan hasta la última escritura en un registro o en la memoria. Los seis programas dan el mismo resultado en las dos arquitecturas.
@@ -77,7 +78,7 @@ Los ciclos se cuentan hasta la última escritura en un registro o en la memoria.
 
 ## Simulación
 
-En Vivado: agregar los archivos `.v` de esta carpeta (menos `tb_dual.v`) a `sources_1`, agregar `tb_dual.v`, `program5.mem` y `program6.mem` a `sim_1`, y elegir `tb_dual` como top.
+En Vivado: `project_1.xpr` ya incluye los `dual_*.v` y los programas en Design Sources, y los `tb_*.v` en Simulation Sources. En `sim_1`, clic derecho sobre `tb_dual` o `tb_orden` → **Set as Top** y correr la simulación.
 
 Con Icarus, desde `Pipeline_E1`:
 
