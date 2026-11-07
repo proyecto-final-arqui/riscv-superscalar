@@ -7,14 +7,14 @@ module dual_datapath(
     output ZeroE_0, ZeroE_1,
     output [31:0] PCTargetE,
     input PCSrcE,
-    input [1:0] ResultSrcM_0,
+    input [1:0] ResultSrcM_0, ResultSrcM_1,
     input MemSelM,
     input RegWriteW_0, RegWriteW_1,
     input [1:0] ResultSrcW_0, ResultSrcW_1,
     input StallF, StallD, FlushD, FlushE,
     input [2:0] ForwardAE_0, ForwardBE_0, ForwardAE_1, ForwardBE_1,
     output [31:0] InstrD_0, InstrD_1,
-    output reg [4:0] Rs1E_0, Rs2E_0, Rs1E_1, Rs2E_1, RdE_0,
+    output reg [4:0] Rs1E_0, Rs2E_0, Rs1E_1, Rs2E_1, RdE_0, RdE_1,
     output reg [4:0] RdM_0, RdW_0, RdM_1, RdW_1,
     output reg [31:0] PCF,
     input [31:0] InstrF_0, InstrF_1,
@@ -32,9 +32,8 @@ module dual_datapath(
 
   reg [31:0] RD1E_0, RD2E_0, PCE_0, ImmExtE_0, PCPlus4E_0;
   reg [31:0] RD1E_1, RD2E_1, ImmExtE_1, PCPlus4E_1;
-  reg [4:0] RdE_1;
   reg [31:0] SrcAE_0, WriteDataE_0, SrcAE_1, WriteDataE_1;
-  wire [31:0] SrcBE_0, ALUResultE_0, ForwardM_0;
+  wire [31:0] SrcBE_0, ALUResultE_0, ForwardM_0, ForwardM_1;
   wire [31:0] SrcBE_1, ALUResultE_1;
 
   reg [31:0] ALUResultM_0, WriteDataM_0, PCPlus4M_0;
@@ -44,14 +43,11 @@ module dual_datapath(
   reg [31:0] ALUResultW_1, ReadDataW_1, PCPlus4W_1;
   reg [31:0] ResultW_0, ResultW_1;
 
-  // ============================ IF ============================
-  // Dual Fetch: imem entrega las instrucciones de PCF y PCF+4.
-  // Mientras ID tenga un par valido se cumple PCF = PCD + 8
+  // Con un par valido, Fetch apunta a las instrucciones siguientes: PCF = PCD + 8
   assign PCPlus4F = PCF + 4;
   assign PCPlus8F = PCF + 8;
 
-  // Entra un par nuevo si ID esta vacio o si salen sus dos instrucciones.
-  // Si solo sale la mas antigua, el PC avanza 4 para reagrupar
+  // Carga dos instrucciones si ID esta vacio o si se emitio el par
   assign LoadPairD = !ValidD || Issue1D;
   assign PCNextF = PCSrcE ? PCTargetE :
                    LoadPairD ? PCPlus8F : PCPlus4F;
@@ -64,7 +60,6 @@ module dual_datapath(
       PCF <= PCNextF;
   end
 
-  // ========================== IF/ID ===========================
   // FlushD tiene prioridad sobre StallD
   always @(posedge clk or posedge reset) begin
     if (reset) begin
@@ -84,8 +79,7 @@ module dual_datapath(
         InstrDReg_1 <= InstrF_1;
         PCD <= PCF;
       end else begin
-        // La joven no salio: pasa a la posicion 0 y se completa el par
-        // con la instruccion de PCF, sin perder ni repetir instrucciones
+        // Conserva I1 como primera instruccion y agrega la siguiente
         InstrDReg_0 <= InstrDReg_1;
         InstrDReg_1 <= InstrF_0;
         PCD <= PCD + 4;
@@ -98,7 +92,6 @@ module dual_datapath(
   assign PCPlus4D_0 = PCD + 4;
   assign PCPlus4D_1 = PCD + 8;
 
-  // ============================ ID ============================
   // Dual Decode: cuatro lecturas y dos escrituras
   dual_regfile rf(
     .clk(clk),
@@ -114,15 +107,16 @@ module dual_datapath(
   extend ext_0(.instr(InstrD_0[31:7]), .immsrc(ImmSrcD_0), .immext(ImmExtD_0));
   extend ext_1(.instr(InstrD_1[31:7]), .immsrc(ImmSrcD_1), .immext(ImmExtD_1));
 
-  // En tipo I y J esos campos son parte del inmediato: se pasan como x0
-  // para que la Hazard Unit no reenvie datos a un operando que no se usa
+  // Fuentes no usadas se pasan como x0
   wire UsesRs1D_0 = (InstrD_0[6:0] != 7'b1101111);
   wire UsesRs2D_0 = (InstrD_0[6:0] == 7'b0110011) ||
                     (InstrD_0[6:0] == 7'b0100011) ||
                     (InstrD_0[6:0] == 7'b1100011);
-  wire UsesRs2D_1 = (InstrD_1[6:0] == 7'b0110011);
+  wire UsesRs1D_1 = (InstrD_1[6:0] != 7'b1101111);
+  wire UsesRs2D_1 = (InstrD_1[6:0] == 7'b0110011) ||
+                    (InstrD_1[6:0] == 7'b0100011) ||
+                    (InstrD_1[6:0] == 7'b1100011);
 
-  // ======================= ID/EX via 0 ========================
   // FlushE inserta una burbuja
   always @(posedge clk or posedge reset) begin
     if (reset) begin
@@ -155,7 +149,6 @@ module dual_datapath(
     end
   end
 
-  // ======================= ID/EX via 1 ========================
   // Si la via 1 no emite entra una burbuja
   always @(posedge clk or posedge reset) begin
     if (reset) begin
@@ -179,24 +172,23 @@ module dual_datapath(
       RD2E_1 <= RD2D_1;
       ImmExtE_1 <= ImmExtD_1;
       PCPlus4E_1 <= PCPlus4D_1;
-      Rs1E_1 <= InstrD_1[19:15];
+      Rs1E_1 <= UsesRs1D_1 ? InstrD_1[19:15] : 5'd0;
       Rs2E_1 <= UsesRs2D_1 ? InstrD_1[24:20] : 5'd0;
       RdE_1 <= InstrD_1[11:7];
     end
   end
 
-  // ======================== Forwarding ========================
-  // JAL reenvia PC+4 desde MEM; el resto reenvia el resultado de la ALU.
-  // La via 1 solo ejecuta operaciones ALU
+  // Para jal se reenvia la direccion de retorno en cualquiera de las vias
   assign ForwardM_0 = (ResultSrcM_0 == 2'b10) ? PCPlus4M_0 : ALUResultM_0;
+  assign ForwardM_1 = (ResultSrcM_1 == 2'b10) ? PCPlus4M_1 : ALUResultM_1;
 
-  // 000: registro, 001: WB via 0, 010: WB via 1, 011: MEM via 0, 100: MEM via 1
+  // 000: registro, 001: WB0, 010: WB1, 011: MEM0, 100: MEM1
   always @* begin
     case (ForwardAE_0)
       3'b001: SrcAE_0 = ResultW_0;
       3'b010: SrcAE_0 = ResultW_1;
       3'b011: SrcAE_0 = ForwardM_0;
-      3'b100: SrcAE_0 = ALUResultM_1;
+      3'b100: SrcAE_0 = ForwardM_1;
       default: SrcAE_0 = RD1E_0;
     endcase
 
@@ -204,7 +196,7 @@ module dual_datapath(
       3'b001: WriteDataE_0 = ResultW_0;
       3'b010: WriteDataE_0 = ResultW_1;
       3'b011: WriteDataE_0 = ForwardM_0;
-      3'b100: WriteDataE_0 = ALUResultM_1;
+      3'b100: WriteDataE_0 = ForwardM_1;
       default: WriteDataE_0 = RD2E_0;
     endcase
 
@@ -212,7 +204,7 @@ module dual_datapath(
       3'b001: SrcAE_1 = ResultW_0;
       3'b010: SrcAE_1 = ResultW_1;
       3'b011: SrcAE_1 = ForwardM_0;
-      3'b100: SrcAE_1 = ALUResultM_1;
+      3'b100: SrcAE_1 = ForwardM_1;
       default: SrcAE_1 = RD1E_1;
     endcase
 
@@ -220,12 +212,11 @@ module dual_datapath(
       3'b001: WriteDataE_1 = ResultW_0;
       3'b010: WriteDataE_1 = ResultW_1;
       3'b011: WriteDataE_1 = ForwardM_0;
-      3'b100: WriteDataE_1 = ALUResultM_1;
+      3'b100: WriteDataE_1 = ForwardM_1;
       default: WriteDataE_1 = RD2E_1;
     endcase
   end
 
-  // ========================= EX via 0 =========================
 
   // El inmediato se elige despues del forwarding
   assign SrcBE_0 = ALUSrcE_0 ? ImmExtE_0 : WriteDataE_0;
@@ -239,7 +230,6 @@ module dual_datapath(
   // Unico recurso de resolucion de saltos (por ahora solo lo usa la via 0)
   assign PCTargetE = PCE_0 + ImmExtE_0;
 
-  // ========================= EX via 1 =========================
   assign SrcBE_1 = ALUSrcE_1 ? ImmExtE_1 : WriteDataE_1;
 
   alu alu_1(
@@ -248,7 +238,6 @@ module dual_datapath(
     .result(ALUResultE_1), .zero(ZeroE_1)
   );
 
-  // ========================== EX/MEM ==========================
   always @(posedge clk or posedge reset) begin
     if (reset) begin
       ALUResultM_0 <= 0;
@@ -271,12 +260,10 @@ module dual_datapath(
     end
   end
 
-  // ============================ MEM ===========================
   // Un solo puerto de datos: MemSelM indica que lo usa la via 1
   assign DataAdrM = MemSelM ? ALUResultM_1 : ALUResultM_0;
   assign WriteDataM = MemSelM ? WriteDataM_1 : WriteDataM_0;
 
-  // ========================== MEM/WB ==========================
   always @(posedge clk or posedge reset) begin
     if (reset) begin
       ALUResultW_0 <= 0;
@@ -299,7 +286,6 @@ module dual_datapath(
     end
   end
 
-  // ============================ WB ============================
   always @* begin
     case (ResultSrcW_0)
       2'b01: ResultW_0 = ReadDataW_0;
