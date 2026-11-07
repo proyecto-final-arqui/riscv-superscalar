@@ -6,7 +6,7 @@ module dual_datapath(
     input [2:0] ALUControlE_0, ALUControlE_1,
     output ZeroE_0, ZeroE_1,
     output [31:0] PCTargetE,
-    input PCSrcE,
+    input PCSrcE, BranchSelE,
     input [1:0] ResultSrcM_0, ResultSrcM_1,
     input MemSelM,
     input RegWriteW_0, RegWriteW_1,
@@ -31,7 +31,7 @@ module dual_datapath(
   wire [31:0] RD1D_1, RD2D_1, ImmExtD_1;
 
   reg [31:0] RD1E_0, RD2E_0, PCE_0, ImmExtE_0, PCPlus4E_0;
-  reg [31:0] RD1E_1, RD2E_1, ImmExtE_1, PCPlus4E_1;
+  reg [31:0] RD1E_1, RD2E_1, PCE_1, ImmExtE_1, PCPlus4E_1;
   reg [31:0] SrcAE_0, WriteDataE_0, SrcAE_1, WriteDataE_1;
   wire [31:0] SrcBE_0, ALUResultE_0, ForwardM_0, ForwardM_1;
   wire [31:0] SrcBE_1, ALUResultE_1;
@@ -154,6 +154,7 @@ module dual_datapath(
     if (reset) begin
       RD1E_1 <= 0;
       RD2E_1 <= 0;
+      PCE_1 <= 0;
       ImmExtE_1 <= 0;
       PCPlus4E_1 <= 0;
       Rs1E_1 <= 0;
@@ -162,6 +163,7 @@ module dual_datapath(
     end else if (FlushE || !Issue1D) begin
       RD1E_1 <= 0;
       RD2E_1 <= 0;
+      PCE_1 <= 0;
       ImmExtE_1 <= 0;
       PCPlus4E_1 <= 0;
       Rs1E_1 <= 0;
@@ -170,6 +172,7 @@ module dual_datapath(
     end else begin
       RD1E_1 <= RD1D_1;
       RD2E_1 <= RD2D_1;
+      PCE_1 <= PCD + 4;
       ImmExtE_1 <= ImmExtD_1;
       PCPlus4E_1 <= PCPlus4D_1;
       Rs1E_1 <= UsesRs1D_1 ? InstrD_1[19:15] : 5'd0;
@@ -227,8 +230,9 @@ module dual_datapath(
     .result(ALUResultE_0), .zero(ZeroE_0)
   );
 
-  // Unico recurso de resolucion de saltos (por ahora solo lo usa la via 0)
-  assign PCTargetE = PCE_0 + ImmExtE_0;
+  // Unico recurso de resolucion de saltos: suma el PC y el inmediato
+  // de la via que tiene el beq o jal
+  assign PCTargetE = BranchSelE ? (PCE_1 + ImmExtE_1) : (PCE_0 + ImmExtE_0);
 
   assign SrcBE_1 = ALUSrcE_1 ? ImmExtE_1 : WriteDataE_1;
 

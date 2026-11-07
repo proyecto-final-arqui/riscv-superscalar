@@ -94,21 +94,22 @@ module comparar #(parameter MEMFILE = "program1.mem",
 endmodule
 
 module tb_dual;
-  wire done1, done2, done3, done4, done5;
-  wire [31:0] err1, err2, err3, err4, err5;
+  wire done1, done2, done3, done4, done5, done6;
+  wire [31:0] err1, err2, err3, err4, err5, err6;
 
   comparar #(.MEMFILE("program1.mem")) p1(.done(done1), .errors(err1));
   comparar #(.MEMFILE("program2.mem")) p2(.done(done2), .errors(err2));
   comparar #(.MEMFILE("program3.mem")) p3(.done(done3), .errors(err3));
   comparar #(.MEMFILE("program4.mem")) p4(.done(done4), .errors(err4));
-  comparar #(.MEMFILE("program5.mem"), .TRACE(1)) p5(.done(done5), .errors(err5));
+  comparar #(.MEMFILE("program5.mem")) p5(.done(done5), .errors(err5));
+  comparar #(.MEMFILE("program6.mem"), .TRACE(1)) p6(.done(done6), .errors(err6));
 
   initial begin
-    wait (done1 && done2 && done3 && done4 && done5);
-    if (err1 + err2 + err3 + err4 + err5 == 0)
-      $display("DUAL: CORRECTO en los 5 programas");
+    wait (done1 && done2 && done3 && done4 && done5 && done6);
+    if (err1 + err2 + err3 + err4 + err5 + err6 == 0)
+      $display("DUAL: CORRECTO en los 6 programas");
     else
-      $display("DUAL: %0d ERRORES", err1 + err2 + err3 + err4 + err5);
+      $display("DUAL: %0d ERRORES", err1 + err2 + err3 + err4 + err5 + err6);
     $finish;
   end
 endmodule

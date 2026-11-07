@@ -13,9 +13,9 @@ Pipeline de cinco etapas con dos vías que emite hasta dos instrucciones por cic
 | `dual_hazard.v` | Forwarding entre vías, Load-Use y saltos. |
 | `dual_datapath.v` | IF/ID con dos instrucciones, dos `extend`, registros de pipeline de las dos vías, dos ALU, un puerto de memoria y dos escrituras en WB. |
 | `dual_riscv.v`, `dual_top.v` | Conexión del procesador y de las memorias. |
-| `tb_dual.v` | Ejecuta los programas 1 a 5 en el Single-Issue y en el Dual a la vez, compara registros y memoria, y mide los ciclos. |
+| `tb_dual.v` | Ejecuta los programas 1 a 6 en el Single-Issue y en el Dual a la vez, compara registros y memoria, y mide los ciclos. |
 
-`Pipeline_E1/program5.mem` es un programa para probar los casos de dos vías.
+`Pipeline_E1/program5.mem` y `Pipeline_E1/program6.mem` prueban los casos de dos vías. El 6 cubre memoria en las dos posiciones del par, el conflicto del puerto de memoria y saltos en la primera y segunda posición, tomados y no tomados.
 
 ## Fetch y reagrupamiento
 
@@ -24,6 +24,7 @@ IF/ID guarda un par `(I0, I1)` con su PC (`PCD`). Mientras el par sea válido, s
 - Si salen las dos instrucciones, o si ID está vacío después de un reset o flush: entra el par nuevo `(InstrF_0, InstrF_1)` y el PC avanza 8.
 - Si solo sale I0: I1 pasa a la posición 0 y se completa el par con `InstrF_0`. El PC avanza 4. Así no se pierde ni se repite ninguna instrucción.
 - Un salto tomado carga `PCTargetE` y vacía IF/ID. Un Load-Use conserva el PC y IF/ID.
+- Si el salto tomado es I0, I1 (más joven) se anula entre EX y MEM. Si el salto es I1, I0 es más antigua y continúa.
 
 ## Issue Unit
 
@@ -31,11 +32,15 @@ I1 sale junto con I0 (`Issue1D = 1`) solo si se cumplen todas estas condiciones:
 
 | Condición | Motivo |
 | --- | --- |
-| I1 es una operación ALU (tipo R o tipo I) | La vía 1 todavía no hace `lw`, `sw`, `beq` ni `jal`. |
-| I0 no es `beq` ni `jal` | Si I0 salta, I1 puede ser del camino equivocado. |
+| I1 es una instrucción soportada (tipo R, tipo I, `lw`, `sw`, `beq` o `jal`) | Las dos vías aceptan todas las instrucciones. |
+| I0 e I1 no son las dos `lw`/`sw` | Hay un solo puerto de memoria. |
+| I0 e I1 no son las dos `beq`/`jal` | Hay un solo recurso de resolución de saltos. |
+| I0 no es `jal` | Un `jal` siempre salta: I1 sería anulada. Con un `beq` en I0, I1 sí sale y se anula solo si el salto se toma. |
 | I1 no lee el registro que escribe I0 | Es un RAW dentro del par: el dato aún no existe. |
-| I1 no necesita el dato de un `lw` que está en EX | Es un Load-Use para I1: el dato de memoria todavía no está. |
+| I1 no necesita el dato de un `lw` que está en EX (`BlockIssue1D`) | Es un Load-Use para I1: el dato de memoria todavía no está. |
 | I0 no está en pausa | I1 no puede adelantarse a I0. |
+
+La memoria y el salto se asignan a la vía donde esté la instrucción: `MemSelM` elige la dirección y el dato del puerto de memoria, y `BranchSelE` elige `PCE_0 + ImmExtE_0` o `PCE_1 + ImmExtE_1` como `PCTargetE`.
 
 Si I1 no sale, se reagrupa y en el ciclo siguiente sale por la vía 0, donde se aplican las reglas del pipeline original.
 
@@ -57,22 +62,22 @@ La prioridad sigue el orden de la tabla, de 100 a 001: gana el productor más jo
 
 | Programa | Single (ciclos) | Dual (ciclos) | Emisiones dobles |
 | --- | --- | --- | --- |
-| 1 - ISA | 29 | 20 | 9 |
+| 1 - ISA | 29 | 18 | 11 |
 | 2 - Forwarding | 24 | 20 | 6 |
-| 3 - Stalling | 33 | 30 | 5 |
-| 4 - Flushing | 44 | 40 | 5 |
-| 5 - Dual | 39 | 32 | 8 |
+| 3 - Stalling | 33 | 26 | 9 |
+| 4 - Flushing | 44 | 37 | 10 |
+| 5 - Dual | 39 | 30 | 11 |
+| 6 - Memoria y saltos en las dos vías | 32 | 23 | 10 |
 
-Los ciclos se cuentan hasta la última escritura en un registro o en la memoria. Los cinco programas dan el mismo resultado en las dos arquitecturas.
+Los ciclos se cuentan hasta la última escritura en un registro o en la memoria. Los seis programas dan el mismo resultado en las dos arquitecturas.
 
 ## Pendiente
 
-- Permitir `lw`/`sw` y saltos en la vía 1. Así se podría emitir ALU + memoria en cualquier orden y un salto en la segunda posición del par, como pide el enunciado.
-- Ajustar la Hazard Unit para las cargas de la vía 1.
+- Contar instrucciones retiradas para calcular IPC y CPI.
 
 ## Simulación
 
-En Vivado: agregar los archivos `.v` de esta carpeta (menos `tb_dual.v`) a `sources_1`, agregar `tb_dual.v` y `program5.mem` a `sim_1`, y elegir `tb_dual` como top.
+En Vivado: agregar los archivos `.v` de esta carpeta (menos `tb_dual.v`) a `sources_1`, agregar `tb_dual.v`, `program5.mem` y `program6.mem` a `sim_1`, y elegir `tb_dual` como top.
 
 Con Icarus, desde `Pipeline_E1`:
 
@@ -81,4 +86,4 @@ iverilog -o dual alu.v aludec.v controller_pipeline.v datapath_pipeline.v dmem.v
 vvp dual
 ```
 
-Señales para la waveform: `dual.rv.dp.PCF`, `PCD`, `InstrD_0`, `InstrD_1`, `LoadPairD`, y en `dual.rv.c`: `Issue1D`, `StallD`, `FlushD`, `ForwardAE_0/1`, `ForwardBE_0/1`.
+Señales para la waveform: `dual.rv.dp.PCF`, `PCD`, `InstrD_0`, `InstrD_1`, `LoadPairD`, y en `dual.rv.c`: `Issue1D`, `BlockIssue1D`, `MemSelM`, `BranchSelE`, `PCSrcE`, `StallD`, `FlushD`, `ForwardAE_0/1`, `ForwardBE_0/1`.

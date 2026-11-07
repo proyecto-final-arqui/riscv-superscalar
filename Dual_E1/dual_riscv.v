@@ -15,14 +15,14 @@ module dual_riscv(
   wire [1:0] ResultSrcM_0, ResultSrcM_1, ResultSrcW_0, ResultSrcW_1;
   wire [2:0] ForwardAE_0, ForwardBE_0, ForwardAE_1, ForwardBE_1;
   wire [2:0] ALUControlE_0, ALUControlE_1;
-  wire ALUSrcE_0, ALUSrcE_1, ZeroE_0, ZeroE_1, PCSrcE;
+  wire ALUSrcE_0, ALUSrcE_1, ZeroE_0, ZeroE_1, PCSrcE, BranchSelE;
   wire Issue1D, MemSelM, RegWriteW_0, RegWriteW_1;
   wire StallF, StallD, FlushD, FlushE;
 
   dual_decode c(
     .clk(clk), .reset(reset),
     .InstrD_0(InstrD_0), .InstrD_1(InstrD_1),
-    .ZeroE_0(ZeroE_0),
+    .ZeroE_0(ZeroE_0), .ZeroE_1(ZeroE_1),
     .Rs1E_0(Rs1E_0), .Rs2E_0(Rs2E_0),
     .Rs1E_1(Rs1E_1), .Rs2E_1(Rs2E_1),
     .RdE_0(RdE_0), .RdE_1(RdE_1), .RdM_0(RdM_0), .RdW_0(RdW_0),
@@ -35,7 +35,7 @@ module dual_riscv(
     .ImmSrcD_0(ImmSrcD_0), .ImmSrcD_1(ImmSrcD_1),
     .ALUSrcE_0(ALUSrcE_0), .ALUSrcE_1(ALUSrcE_1),
     .ALUControlE_0(ALUControlE_0), .ALUControlE_1(ALUControlE_1),
-    .PCSrcE(PCSrcE),
+    .PCSrcE(PCSrcE), .BranchSelE(BranchSelE),
     .MemWriteM(MemWriteM), .MemSelM(MemSelM),
     .ResultSrcM_0(ResultSrcM_0), .ResultSrcM_1(ResultSrcM_1),
     .RegWriteW_0(RegWriteW_0), .RegWriteW_1(RegWriteW_1),
@@ -49,7 +49,7 @@ module dual_riscv(
     .ALUSrcE_0(ALUSrcE_0), .ALUSrcE_1(ALUSrcE_1),
     .ALUControlE_0(ALUControlE_0), .ALUControlE_1(ALUControlE_1),
     .ZeroE_0(ZeroE_0), .ZeroE_1(ZeroE_1),
-    .PCTargetE(PCTargetE), .PCSrcE(PCSrcE),
+    .PCTargetE(PCTargetE), .PCSrcE(PCSrcE), .BranchSelE(BranchSelE),
     .ResultSrcM_0(ResultSrcM_0), .ResultSrcM_1(ResultSrcM_1), .MemSelM(MemSelM),
     .RegWriteW_0(RegWriteW_0), .RegWriteW_1(RegWriteW_1),
     .ResultSrcW_0(ResultSrcW_0), .ResultSrcW_1(ResultSrcW_1),
