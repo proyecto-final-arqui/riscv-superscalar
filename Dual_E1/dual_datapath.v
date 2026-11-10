@@ -230,9 +230,12 @@ module dual_datapath(
     .result(ALUResultE_0), .zero(ZeroE_0)
   );
 
-  // Unico recurso de resolucion de saltos: suma el PC y el inmediato
-  // de la via que tiene el beq o jal
-  assign PCTargetE = BranchSelE ? (PCE_1 + ImmExtE_1) : (PCE_0 + ImmExtE_0);
+  // Unico recurso de resolucion de saltos: primero se elige el PC y el
+  // inmediato de la via que tiene el beq o jal, y luego un solo sumador
+  wire [31:0] PCBranchE, ImmBranchE;
+  assign PCBranchE = BranchSelE ? PCE_1 : PCE_0;
+  assign ImmBranchE = BranchSelE ? ImmExtE_1 : ImmExtE_0;
+  assign PCTargetE = PCBranchE + ImmBranchE;
 
   assign SrcBE_1 = ALUSrcE_1 ? ImmExtE_1 : WriteDataE_1;
 
