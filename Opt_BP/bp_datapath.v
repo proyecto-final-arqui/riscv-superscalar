@@ -1,0 +1,383 @@
+// Datapath del Dual-Issue con predictor de saltos de 2 bits y BTB.
+// Cambios respecto a dual_datapath: prediccion en IF, PC por posicion en
+// IF/ID, prediccion guardada hasta EX y correccion del PC si falla.
+module bp_datapath(
+    input clk, reset,
+    input [1:0] ImmSrcD_0, ImmSrcD_1,
+    input Issue1D,
+    input ALUSrcE_0, ALUSrcE_1,
+    input [2:0] ALUControlE_0, ALUControlE_1,
+    output ZeroE_0, ZeroE_1,
+    output [31:0] PCTargetE,
+    input PCSrcE_0, PCSrcE_1, BranchSelE, CtrlE,
+    output MisE_0, MisE_1, RedirectE,
+    input [1:0] ResultSrcM_0, ResultSrcM_1,
+    input MemSelM,
+    input RegWriteW_0, RegWriteW_1,
+    input [1:0] ResultSrcW_0, ResultSrcW_1,
+    input StallF, StallD, FlushD, FlushE,
+    input [2:0] ForwardAE_0, ForwardBE_0, ForwardAE_1, ForwardBE_1,
+    output [31:0] InstrD_0, InstrD_1,
+    output reg [4:0] Rs1E_0, Rs2E_0, Rs1E_1, Rs2E_1, RdE_0, RdE_1,
+    output reg [4:0] RdM_0, RdW_0, RdM_1, RdW_1,
+    output reg [31:0] PCF,
+    input [31:0] InstrF_0, InstrF_1,
+    output [31:0] DataAdrM, WriteDataM,
+    input [31:0] ReadDataM
+);
+
+  wire [31:0] PCNextF, PCPlus4F, PCPlus8F, PredNextF;
+  wire LoadPairD;
+  reg [31:0] InstrDReg_0, InstrDReg_1, PCD, PCD_1;
+  reg ValidD;
+  // Prediccion de cada instruccion: en IF, en ID y en EX
+  wire PredF_0, PredF_1;
+  wire [31:0] PTgtF_0, PTgtF_1;
+  reg PredD_0, PredD_1, PredE_0, PredE_1;
+  reg [31:0] PTgtD_0, PTgtD_1, PTgtE_0, PTgtE_1;
+  wire [31:0] CorrectPCE, PCBranchE, ImmBranchE;
+  wire [31:0] PCPlus4D_0, PCPlus4D_1;
+  wire [31:0] RD1D_0, RD2D_0, ImmExtD_0;
+  wire [31:0] RD1D_1, RD2D_1, ImmExtD_1;
+
+  reg [31:0] RD1E_0, RD2E_0, PCE_0, ImmExtE_0, PCPlus4E_0;
+  reg [31:0] RD1E_1, RD2E_1, PCE_1, ImmExtE_1, PCPlus4E_1;
+  reg [31:0] SrcAE_0, WriteDataE_0, SrcAE_1, WriteDataE_1;
+  wire [31:0] SrcBE_0, ALUResultE_0, ForwardM_0, ForwardM_1;
+  wire [31:0] SrcBE_1, ALUResultE_1;
+
+  reg [31:0] ALUResultM_0, WriteDataM_0, PCPlus4M_0;
+  reg [31:0] ALUResultM_1, WriteDataM_1, PCPlus4M_1;
+
+  reg [31:0] ALUResultW_0, ReadDataW_0, PCPlus4W_0;
+  reg [31:0] ALUResultW_1, ReadDataW_1, PCPlus4W_1;
+  reg [31:0] ResultW_0, ResultW_1;
+
+  // PCF siempre apunta a la instruccion que sigue (segun la prediccion)
+  // a la ultima instruccion valida de IF/ID
+  assign PCPlus4F = PCF + 4;
+  assign PCPlus8F = PCF + 8;
+
+  // Predictor: se consulta con las dos direcciones del par y se
+  // actualiza con el beq o jal que esta en EX
+  bp_predictor bp(
+    .clk(clk), .reset(reset),
+    .pc0(PCF), .pc1(PCPlus4F),
+    .pred0(PredF_0), .pred1(PredF_1),
+    .tgt0(PTgtF_0), .tgt1(PTgtF_1),
+    .upd_en(CtrlE), .upd_taken(PCSrcE_0 | PCSrcE_1),
+    .upd_pc(PCBranchE), .upd_target(PCTargetE)
+  );
+
+  // Carga dos instrucciones si ID esta vacio, si se emitio el par o si
+  // la posicion 1 esta vacia (I0 se predijo tomada)
+  assign LoadPairD = !ValidD || Issue1D || (InstrDReg_1 == 0);
+
+  // PC siguiente predicho. Si entra el par: el destino de I0 si se predice
+  // tomada, si no el de I1, si no PC + 8. Si se reagrupa solo entra
+  // InstrF_0: su destino o PC + 4
+  assign PredNextF = LoadPairD ?
+                       (PredF_0 ? PTgtF_0 : PredF_1 ? PTgtF_1 : PCPlus8F) :
+                       (PredF_0 ? PTgtF_0 : PCPlus4F);
+
+  // Un fallo de prediccion en EX corrige el PC
+  assign PCNextF = RedirectE ? CorrectPCE : PredNextF;
+
+  // StallF conserva el PC durante Load-Use
+  always @(posedge clk or posedge reset) begin
+    if (reset)
+      PCF <= 0;
+    else if (!StallF)
+      PCF <= PCNextF;
+  end
+
+  // FlushD tiene prioridad sobre StallD
+  always @(posedge clk or posedge reset) begin
+    if (reset) begin
+      InstrDReg_0 <= 0;
+      InstrDReg_1 <= 0;
+      PCD <= 0;
+      PCD_1 <= 0;
+      ValidD <= 0;
+      PredD_0 <= 0;
+      PredD_1 <= 0;
+      PTgtD_0 <= 0;
+      PTgtD_1 <= 0;
+    end else if (FlushD) begin
+      InstrDReg_0 <= 0;
+      InstrDReg_1 <= 0;
+      PCD <= 0;
+      PCD_1 <= 0;
+      ValidD <= 0;
+      PredD_0 <= 0;
+      PredD_1 <= 0;
+      PTgtD_0 <= 0;
+      PTgtD_1 <= 0;
+    end else if (!StallD) begin
+      ValidD <= 1;
+      if (LoadPairD) begin
+        InstrDReg_0 <= InstrF_0;
+        PCD <= PCF;
+        PredD_0 <= PredF_0;
+        PTgtD_0 <= PTgtF_0;
+        // Si I0 se predice tomada, InstrF_1 es del camino equivocado
+        InstrDReg_1 <= PredF_0 ? 32'b0 : InstrF_1;
+        PCD_1 <= PCPlus4F;
+        PredD_1 <= PredF_0 ? 1'b0 : PredF_1;
+        PTgtD_1 <= PTgtF_1;
+      end else begin
+        // Conserva I1 como primera instruccion y agrega la siguiente
+        InstrDReg_0 <= InstrDReg_1;
+        PCD <= PCD_1;
+        PredD_0 <= PredD_1;
+        PTgtD_0 <= PTgtD_1;
+        InstrDReg_1 <= InstrF_0;
+        PCD_1 <= PCF;
+        PredD_1 <= PredF_0;
+        PTgtD_1 <= PTgtF_0;
+      end
+    end
+  end
+
+  assign InstrD_0 = InstrDReg_0;
+  assign InstrD_1 = InstrDReg_1;
+  assign PCPlus4D_0 = PCD + 4;
+  assign PCPlus4D_1 = PCD_1 + 4;
+
+  // Dual Decode: cuatro lecturas y dos escrituras
+  dual_regfile rf(
+    .clk(clk),
+    .we_0(RegWriteW_0), .we_1(RegWriteW_1),
+    .a1_0(InstrD_0[19:15]), .a2_0(InstrD_0[24:20]),
+    .a1_1(InstrD_1[19:15]), .a2_1(InstrD_1[24:20]),
+    .a3_0(RdW_0), .a3_1(RdW_1),
+    .wd_0(ResultW_0), .wd_1(ResultW_1),
+    .rd1_0(RD1D_0), .rd2_0(RD2D_0),
+    .rd1_1(RD1D_1), .rd2_1(RD2D_1)
+  );
+
+  extend ext_0(.instr(InstrD_0[31:7]), .immsrc(ImmSrcD_0), .immext(ImmExtD_0));
+  extend ext_1(.instr(InstrD_1[31:7]), .immsrc(ImmSrcD_1), .immext(ImmExtD_1));
+
+  // Fuentes no usadas se pasan como x0
+  wire UsesRs1D_0 = (InstrD_0[6:0] != 7'b1101111);
+  wire UsesRs2D_0 = (InstrD_0[6:0] == 7'b0110011) ||
+                    (InstrD_0[6:0] == 7'b0100011) ||
+                    (InstrD_0[6:0] == 7'b1100011);
+  wire UsesRs1D_1 = (InstrD_1[6:0] != 7'b1101111);
+  wire UsesRs2D_1 = (InstrD_1[6:0] == 7'b0110011) ||
+                    (InstrD_1[6:0] == 7'b0100011) ||
+                    (InstrD_1[6:0] == 7'b1100011);
+
+  // FlushE inserta una burbuja
+  always @(posedge clk or posedge reset) begin
+    if (reset) begin
+      RD1E_0 <= 0;
+      RD2E_0 <= 0;
+      PCE_0 <= 0;
+      ImmExtE_0 <= 0;
+      PCPlus4E_0 <= 0;
+      Rs1E_0 <= 0;
+      Rs2E_0 <= 0;
+      RdE_0 <= 0;
+      PredE_0 <= 0;
+      PTgtE_0 <= 0;
+    end else if (FlushE) begin
+      RD1E_0 <= 0;
+      RD2E_0 <= 0;
+      PCE_0 <= 0;
+      ImmExtE_0 <= 0;
+      PCPlus4E_0 <= 0;
+      Rs1E_0 <= 0;
+      Rs2E_0 <= 0;
+      RdE_0 <= 0;
+      PredE_0 <= 0;
+      PTgtE_0 <= 0;
+    end else begin
+      PredE_0 <= PredD_0;
+      PTgtE_0 <= PTgtD_0;
+      RD1E_0 <= RD1D_0;
+      RD2E_0 <= RD2D_0;
+      PCE_0 <= PCD;
+      ImmExtE_0 <= ImmExtD_0;
+      PCPlus4E_0 <= PCPlus4D_0;
+      Rs1E_0 <= UsesRs1D_0 ? InstrD_0[19:15] : 5'd0;
+      Rs2E_0 <= UsesRs2D_0 ? InstrD_0[24:20] : 5'd0;
+      RdE_0 <= InstrD_0[11:7];
+    end
+  end
+
+  // Si la via 1 no emite entra una burbuja
+  always @(posedge clk or posedge reset) begin
+    if (reset) begin
+      RD1E_1 <= 0;
+      RD2E_1 <= 0;
+      PCE_1 <= 0;
+      ImmExtE_1 <= 0;
+      PCPlus4E_1 <= 0;
+      Rs1E_1 <= 0;
+      Rs2E_1 <= 0;
+      RdE_1 <= 0;
+      PredE_1 <= 0;
+      PTgtE_1 <= 0;
+    end else if (FlushE || !Issue1D) begin
+      RD1E_1 <= 0;
+      RD2E_1 <= 0;
+      PCE_1 <= 0;
+      ImmExtE_1 <= 0;
+      PCPlus4E_1 <= 0;
+      Rs1E_1 <= 0;
+      Rs2E_1 <= 0;
+      RdE_1 <= 0;
+      PredE_1 <= 0;
+      PTgtE_1 <= 0;
+    end else begin
+      PredE_1 <= PredD_1;
+      PTgtE_1 <= PTgtD_1;
+      RD1E_1 <= RD1D_1;
+      RD2E_1 <= RD2D_1;
+      PCE_1 <= PCD_1;
+      ImmExtE_1 <= ImmExtD_1;
+      PCPlus4E_1 <= PCPlus4D_1;
+      Rs1E_1 <= UsesRs1D_1 ? InstrD_1[19:15] : 5'd0;
+      Rs2E_1 <= UsesRs2D_1 ? InstrD_1[24:20] : 5'd0;
+      RdE_1 <= InstrD_1[11:7];
+    end
+  end
+
+  // Para jal se reenvia la direccion de retorno en cualquiera de las vias
+  assign ForwardM_0 = (ResultSrcM_0 == 2'b10) ? PCPlus4M_0 : ALUResultM_0;
+  assign ForwardM_1 = (ResultSrcM_1 == 2'b10) ? PCPlus4M_1 : ALUResultM_1;
+
+  // 000: registro, 001: WB0, 010: WB1, 011: MEM0, 100: MEM1
+  always @* begin
+    case (ForwardAE_0)
+      3'b001: SrcAE_0 = ResultW_0;
+      3'b010: SrcAE_0 = ResultW_1;
+      3'b011: SrcAE_0 = ForwardM_0;
+      3'b100: SrcAE_0 = ForwardM_1;
+      default: SrcAE_0 = RD1E_0;
+    endcase
+
+    case (ForwardBE_0)
+      3'b001: WriteDataE_0 = ResultW_0;
+      3'b010: WriteDataE_0 = ResultW_1;
+      3'b011: WriteDataE_0 = ForwardM_0;
+      3'b100: WriteDataE_0 = ForwardM_1;
+      default: WriteDataE_0 = RD2E_0;
+    endcase
+
+    case (ForwardAE_1)
+      3'b001: SrcAE_1 = ResultW_0;
+      3'b010: SrcAE_1 = ResultW_1;
+      3'b011: SrcAE_1 = ForwardM_0;
+      3'b100: SrcAE_1 = ForwardM_1;
+      default: SrcAE_1 = RD1E_1;
+    endcase
+
+    case (ForwardBE_1)
+      3'b001: WriteDataE_1 = ResultW_0;
+      3'b010: WriteDataE_1 = ResultW_1;
+      3'b011: WriteDataE_1 = ForwardM_0;
+      3'b100: WriteDataE_1 = ForwardM_1;
+      default: WriteDataE_1 = RD2E_1;
+    endcase
+  end
+
+
+  // El inmediato se elige despues del forwarding
+  assign SrcBE_0 = ALUSrcE_0 ? ImmExtE_0 : WriteDataE_0;
+
+  alu alu_0(
+    .a(SrcAE_0), .b(SrcBE_0),
+    .alucontrol(ALUControlE_0),
+    .result(ALUResultE_0), .zero(ZeroE_0)
+  );
+
+  // Unico recurso de resolucion de saltos: primero se elige el PC y el
+  // inmediato de la via que tiene el beq o jal, y luego un solo sumador
+  assign PCBranchE = BranchSelE ? PCE_1 : PCE_0;
+  assign ImmBranchE = BranchSelE ? ImmExtE_1 : ImmExtE_0;
+  assign PCTargetE = PCBranchE + ImmBranchE;
+
+  // Fallo de prediccion: el salto se tomo y no se predijo (o se predijo
+  // otro destino), o se predijo tomado y no se tomo
+  assign MisE_0 = PCSrcE_0 ? (!PredE_0 || (PTgtE_0 != PCTargetE)) : PredE_0;
+  assign MisE_1 = PCSrcE_1 ? (!PredE_1 || (PTgtE_1 != PCTargetE)) : PredE_1;
+  assign RedirectE = MisE_0 | MisE_1;
+
+  // PC correcto: el destino si se tomo, la instruccion siguiente si no.
+  // Si fallan las dos, manda I0, que es la mas antigua
+  assign CorrectPCE = MisE_0 ? (PCSrcE_0 ? PCTargetE : PCE_0 + 4) :
+                               (PCSrcE_1 ? PCTargetE : PCE_1 + 4);
+
+  assign SrcBE_1 = ALUSrcE_1 ? ImmExtE_1 : WriteDataE_1;
+
+  alu alu_1(
+    .a(SrcAE_1), .b(SrcBE_1),
+    .alucontrol(ALUControlE_1),
+    .result(ALUResultE_1), .zero(ZeroE_1)
+  );
+
+  always @(posedge clk or posedge reset) begin
+    if (reset) begin
+      ALUResultM_0 <= 0;
+      WriteDataM_0 <= 0;
+      PCPlus4M_0 <= 0;
+      RdM_0 <= 0;
+      ALUResultM_1 <= 0;
+      WriteDataM_1 <= 0;
+      PCPlus4M_1 <= 0;
+      RdM_1 <= 0;
+    end else begin
+      ALUResultM_0 <= ALUResultE_0;
+      WriteDataM_0 <= WriteDataE_0;
+      PCPlus4M_0 <= PCPlus4E_0;
+      RdM_0 <= RdE_0;
+      ALUResultM_1 <= ALUResultE_1;
+      WriteDataM_1 <= WriteDataE_1;
+      PCPlus4M_1 <= PCPlus4E_1;
+      RdM_1 <= RdE_1;
+    end
+  end
+
+  // Un solo puerto de datos: MemSelM indica que lo usa la via 1
+  assign DataAdrM = MemSelM ? ALUResultM_1 : ALUResultM_0;
+  assign WriteDataM = MemSelM ? WriteDataM_1 : WriteDataM_0;
+
+  always @(posedge clk or posedge reset) begin
+    if (reset) begin
+      ALUResultW_0 <= 0;
+      ReadDataW_0 <= 0;
+      PCPlus4W_0 <= 0;
+      RdW_0 <= 0;
+      ALUResultW_1 <= 0;
+      ReadDataW_1 <= 0;
+      PCPlus4W_1 <= 0;
+      RdW_1 <= 0;
+    end else begin
+      ALUResultW_0 <= ALUResultM_0;
+      ReadDataW_0 <= ReadDataM;
+      PCPlus4W_0 <= PCPlus4M_0;
+      RdW_0 <= RdM_0;
+      ALUResultW_1 <= ALUResultM_1;
+      ReadDataW_1 <= ReadDataM;
+      PCPlus4W_1 <= PCPlus4M_1;
+      RdW_1 <= RdM_1;
+    end
+  end
+
+  always @* begin
+    case (ResultSrcW_0)
+      2'b01: ResultW_0 = ReadDataW_0;
+      2'b10: ResultW_0 = PCPlus4W_0;
+      default: ResultW_0 = ALUResultW_0;
+    endcase
+
+    case (ResultSrcW_1)
+      2'b01: ResultW_1 = ReadDataW_1;
+      2'b10: ResultW_1 = PCPlus4W_1;
+      default: ResultW_1 = ALUResultW_1;
+    endcase
+  end
+endmodule
