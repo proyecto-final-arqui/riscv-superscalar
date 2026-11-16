@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="tb_dual_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="tb_dual" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+   </zoom_setting>
+   <column_width_setting>
+   </column_width_setting>
+   <WVObjectSize size="24" />
+   <wvobject type="divider" fp_name="divider24">
+      <obj_property name="label">Reloj</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_dual/p5/clk" type="logic">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider26">
+      <obj_property name="label">Par en ID (00000000 = vacio)</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_dual/p5/dual/rv/dp/PCD" type="array">
+      <obj_property name="ElementShortName">PCD[31:0]</obj_property>
+      <obj_property name="ObjectShortName">PCD[31:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_dual/p5/dual/rv/dp/InstrD_0" type="array">
+      <obj_property name="ElementShortName">InstrD_0[31:0]</obj_property>
+      <obj_property name="ObjectShortName">InstrD_0[31:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_dual/p5/dual/rv/dp/InstrD_1" type="array">
+      <obj_property name="ElementShortName">InstrD_1[31:0]</obj_property>
+      <obj_property name="ObjectShortName">InstrD_1[31:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_dual/p5/dual/rv/dp/ValidD" type="logic">
+      <obj_property name="ElementShortName">ValidD</obj_property>
+      <obj_property name="ObjectShortName">ValidD</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_dual/p5/dual/rv/dp/LoadPairD" type="logic">
+      <obj_property name="ElementShortName">LoadPairD</obj_property>
+      <obj_property name="ObjectShortName">LoadPairD</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider32">
+      <obj_property name="label">Issue Unit</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_dual/p5/dual/rv/c/Issue1D" type="logic">
+      <obj_property name="ElementShortName">Issue1D</obj_property>
+      <obj_property name="ObjectShortName">Issue1D</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider34">
+      <obj_property name="label">Forwarding de x8 hacia add x9 (100 = MEM via 1)</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_dual/p5/dual/rv/c/ForwardAE_0" type="array">
+      <obj_property name="ElementShortName">ForwardAE_0[2:0]</obj_property>
+      <obj_property name="ObjectShortName">ForwardAE_0[2:0]</obj_property>
+      <obj_property name="Radix">BINARYRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_dual/p5/dual/rv/c/ForwardBE_0" type="array">
+      <obj_property name="ElementShortName">ForwardBE_0[2:0]</obj_property>
+      <obj_property name="ObjectShortName">ForwardBE_0[2:0]</obj_property>
+      <obj_property name="Radix">BINARYRADIX</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider37">
+      <obj_property name="label">Escritura via 0</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_dual/p5/dual/rv/c/RegWriteW_0" type="logic">
+      <obj_property name="ElementShortName">RegWriteW_0</obj_property>
+      <obj_property name="ObjectShortName">RegWriteW_0</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_dual/p5/dual/rv/dp/RdW_0" type="array">
+      <obj_property name="ElementShortName">RdW_0[4:0]</obj_property>
+      <obj_property name="ObjectShortName">RdW_0[4:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_dual/p5/dual/rv/dp/ResultW_0" type="array">
+      <obj_property name="ElementShortName">ResultW_0[31:0]</obj_property>
+      <obj_property name="ObjectShortName">ResultW_0[31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider41">
+      <obj_property name="label">Escritura via 1</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_dual/p5/dual/rv/c/RegWriteW_1" type="logic">
+      <obj_property name="ElementShortName">RegWriteW_1</obj_property>
+      <obj_property name="ObjectShortName">RegWriteW_1</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_dual/p5/dual/rv/dp/RdW_1" type="array">
+      <obj_property name="ElementShortName">RdW_1[4:0]</obj_property>
+      <obj_property name="ObjectShortName">RdW_1[4:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_dual/p5/dual/rv/dp/ResultW_1" type="array">
+      <obj_property name="ElementShortName">ResultW_1[31:0]</obj_property>
+      <obj_property name="ObjectShortName">ResultW_1[31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider45">
+      <obj_property name="label">Banco de registros</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_dual/p5/dual/rv/dp/rf/rf[8]" type="array">
+      <obj_property name="ElementShortName">[8][31:0]</obj_property>
+      <obj_property name="ObjectShortName">[8][31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_dual/p5/dual/rv/dp/rf/rf[9]" type="array">
+      <obj_property name="ElementShortName">[9][31:0]</obj_property>
+      <obj_property name="ObjectShortName">[9][31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+</wave_config>

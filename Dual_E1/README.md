@@ -15,6 +15,7 @@ Pipeline de cinco etapas con dos vías que emite hasta dos instrucciones por cic
 | `dual_riscv.v`, `dual_top.v` | Conexión del procesador y de las memorias. |
 | `tb_dual.v` | Ejecuta los programas 1 a 6 en el Single-Issue y en el Dual a la vez, compara registros y memoria, y mide los ciclos. |
 | `tb_orden.v` | Ejecuta los programas 1 a 6 en las dos arquitecturas y compara la secuencia de instrucciones (PC y palabra) que pasan de EX a MEM. Demuestra que el reagrupamiento respeta el orden del programa y que no se pierden ni se duplican instrucciones. Con `TRACE(1)` muestra qué sale por cada vía en cada ciclo. |
+| `ondas_dual.tcl`, `e2_*.wcfg` | Configuraciones de ondas de las figuras del informe E2 (ver "Ondas para el informe"). |
 
 `Pipeline_E1/program5.mem` y `Pipeline_E1/program6.mem` prueban los casos de dos vías. El 6 cubre memoria en las dos posiciones del par, el conflicto del puerto de memoria y saltos en la primera y segunda posición, tomados y no tomados.
 
@@ -80,11 +81,26 @@ Los ciclos se cuentan hasta la última escritura en un registro o en la memoria.
 
 En Vivado: `project_1.xpr` ya incluye los `dual_*.v` y los programas en Design Sources, y los `tb_*.v` en Simulation Sources. En `sim_1`, clic derecho sobre `tb_dual` o `tb_orden` → **Set as Top** y correr la simulación.
 
-Con Icarus, desde `Pipeline_E1`:
+Con Icarus, desde `Pipeline_E1` (ahí están los `program*.mem`). `-s` elige el testbench: `tb_dual`, `tb_orden` o `tb_dual_hazard`.
 
 ```
-iverilog -o dual alu.v aludec.v controller_pipeline.v datapath_pipeline.v dmem.v extend.v hazard_unit.v imem.v maindec.v regfile.v riscv_pipeline.v top_pipeline.v ../Dual_E1/*.v
+iverilog -g2005 -o dual -s tb_dual alu.v aludec.v controller_pipeline.v datapath_pipeline.v dmem.v extend.v hazard_unit.v imem.v maindec.v regfile.v riscv_pipeline.v top_pipeline.v ../Dual_E1/*.v
 vvp dual
 ```
 
-Señales para la waveform: `dual.rv.dp.PCF`, `PCD`, `InstrD_0`, `InstrD_1`, `LoadPairD`, y en `dual.rv.c`: `Issue1D`, `BlockIssue1D`, `MemSelM`, `BranchSelE`, `PCSrcE`, `StallD`, `FlushD`, `ForwardAE_0/1`, `ForwardBE_0/1`.
+## Ondas para el informe
+
+Los archivos `e2_*.wcfg` tienen las señales de cada figura del informe E2. Hay dos formas de usarlos:
+
+- Con la simulación de `tb_dual` (o `tb_orden`) abierta, **File > Simulation Waveform > Open Configuration** y elegir el `.wcfg`. Después, en la Tcl Console, `restart` y `run all` para que se dibujen desde el inicio.
+- O en la Tcl Console: `source [get_property DIRECTORY [current_project]]/Dual_E1/ondas_dual.tcl` y luego `ondas_dual` (con `tb_dual` abierto) u `ondas_orden` (con `tb_orden` abierto). Abre todas las ventanas ya simuladas y vuelve a guardar los `.wcfg`.
+
+| Archivo | Top | Programa | Ventana | Qué muestra |
+| --- | --- | --- | --- | --- |
+| `e2_emision.wcfg` | `tb_dual` | 5 | 25-75 ns | Emisión doble, RAW dentro del par, reagrupamiento, forwarding entre vías y dos escrituras en WB. |
+| `e2_waw.wcfg` | `tb_dual` | 5 | 85-125 ns | Dos escrituras a `x8` en el mismo par y prioridad del forwarding. |
+| `e2_loaduse1.wcfg` | `tb_dual` | 5 | 255-295 ns | Load-Use de I1 (`BlockIssue1D`). |
+| `e2_memoria.wcfg` | `tb_dual` | 6 | 35-95 ns | ALU y memoria en ambas posiciones, Load-Use y conflicto del puerto. |
+| `e2_saltos.wcfg` | `tb_dual` | 6 | 95-215 ns | Saltos en I0 y en I1, tomados y no tomados, flushing e I1 anulada. |
+| `e2_resultados.wcfg` | `tb_dual` | 1-6 | final (816 ns) | `errors = 0` y ciclos de cada arquitectura (`end_s`, `end_d`). |
+| `e2_orden.wcfg` | `tb_orden` | 1-6 | final (916 ns) | Instrucciones completadas en cada arquitectura (`ns = nd`) y `errors = 0`. |
