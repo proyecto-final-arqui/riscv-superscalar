@@ -50,11 +50,11 @@ También se verificó con 60 programas aleatorios con bucles, con BTB de 16 y de
 
 ## Simulación
 
-Con Icarus, desde una carpeta con los `program*.mem`:
+En Vivado: los `bp_*.v`, `tb_bp.v` y `program7.mem` ya están en el proyecto. En `sim_1`, elegir `tb_bp` como top y correr la simulación; debe terminar con `PREDICTOR: CORRECTO en los 7 programas`. La comparación con los programas de la entrega final está en `Evaluacion_EF` (`tb_profesor` y `tb_propio`).
+
+Con Icarus, desde `Pipeline_E1` (ahí están los `program*.mem`):
 
 ```
 iverilog -g2005 -o bp -s tb_bp ../Pipeline_E1/{alu,aludec,controller_pipeline,datapath_pipeline,dmem,extend,hazard_unit,imem,maindec,regfile,riscv_pipeline,top_pipeline}.v ../Dual_E1/dual_*.v ../Opt_BP/bp_*.v ../Opt_BP/tb_bp.v
 vvp bp
 ```
-
-En Vivado: agregar los `bp_*.v` a Design Sources, `tb_bp.v` y `program7.mem` a Simulation Sources, y elegir `tb_bp` como top. Corre 200 ciclos: ajustar el tiempo de simulación a 2100 ns.

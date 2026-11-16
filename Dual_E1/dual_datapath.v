@@ -293,6 +293,28 @@ module dual_datapath(
     end
   end
 
+  // Solo para las ondas: instruccion que hay en cada etapa (0 = burbuja).
+  // No interviene en la ejecucion
+  reg [31:0] InstrE_0, InstrE_1, InstrM_0, InstrM_1, InstrW_0, InstrW_1;
+  always @(posedge clk or posedge reset) begin
+    if (reset) begin
+      InstrE_0 <= 0;
+      InstrE_1 <= 0;
+      InstrM_0 <= 0;
+      InstrM_1 <= 0;
+      InstrW_0 <= 0;
+      InstrW_1 <= 0;
+    end else begin
+      InstrE_0 <= FlushE ? 32'b0 : InstrD_0;
+      InstrE_1 <= (FlushE || !Issue1D) ? 32'b0 : InstrD_1;
+      InstrM_0 <= InstrE_0;
+      // Si salta I0, la I1 que salio con ella se anula
+      InstrM_1 <= (PCSrcE && !BranchSelE) ? 32'b0 : InstrE_1;
+      InstrW_0 <= InstrM_0;
+      InstrW_1 <= InstrM_1;
+    end
+  end
+
   always @* begin
     case (ResultSrcW_0)
       2'b01: ResultW_0 = ReadDataW_0;

@@ -9,3 +9,6 @@ project_1.runs/
 project_1.gen/
 project_1.ip_user_files/
 project_1.cache/
+
+# Salida de Evaluacion_EF/correr_icarus.sh
+Evaluacion_EF/sim/
