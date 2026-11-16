@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="tb_ef_sim.wdb" id="1">
+         <top_modules>
+            <top_module name="tb_ef" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting><ZoomStartTime time="2890000 ps"/><ZoomEndTime time="2970000 ps"/><Cursor1Time time="2890000 ps"/></zoom_setting>
+   <column_width_setting><NameColumnWidth column_width="195"/><ValueColumnWidth column_width="90"/></column_width_setting>
+   <WVObjectSize size="59" />
+   <wvobject type="divider" fp_name="divider373">
+      <obj_property name="label">Reloj</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/clk" type="logic">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/reset" type="logic">
+      <obj_property name="ElementShortName">reset</obj_property>
+      <obj_property name="ObjectShortName">reset</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider376">
+      <obj_property name="label">Fetch / Decode (C: Dual+BTB)</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/PCF" type="array">
+      <obj_property name="ElementShortName">PCF[31:0]</obj_property>
+      <obj_property name="ObjectShortName">PCF[31:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/PCD" type="array">
+      <obj_property name="ElementShortName">PCD[31:0]</obj_property>
+      <obj_property name="ObjectShortName">PCD[31:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/PCD_1" type="array">
+      <obj_property name="ElementShortName">PCD_1[31:0]</obj_property>
+      <obj_property name="ObjectShortName">PCD_1[31:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/InstrD_0" type="array">
+      <obj_property name="ElementShortName">InstrD_0[31:0]</obj_property>
+      <obj_property name="ObjectShortName">InstrD_0[31:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/InstrD_1" type="array">
+      <obj_property name="ElementShortName">InstrD_1[31:0]</obj_property>
+      <obj_property name="ObjectShortName">InstrD_1[31:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/c/Issue1D" type="logic">
+      <obj_property name="ElementShortName">Issue1D</obj_property>
+      <obj_property name="ObjectShortName">Issue1D</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/LoadPairD" type="logic">
+      <obj_property name="ElementShortName">LoadPairD</obj_property>
+      <obj_property name="ObjectShortName">LoadPairD</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider384">
+      <obj_property name="label">Comprobacion de etapas (A-D)</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/chk_A_ok_p" type="logic">
+      <obj_property name="ElementShortName">chk_A_ok_p</obj_property>
+      <obj_property name="ObjectShortName">chk_A_ok_p</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/chk_B_ok_p" type="logic">
+      <obj_property name="ElementShortName">chk_B_ok_p</obj_property>
+      <obj_property name="ObjectShortName">chk_B_ok_p</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/chk_C_ok_p" type="logic">
+      <obj_property name="ElementShortName">chk_C_ok_p</obj_property>
+      <obj_property name="ObjectShortName">chk_C_ok_p</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/chk_D_ok_p" type="logic">
+      <obj_property name="ElementShortName">chk_D_ok_p</obj_property>
+      <obj_property name="ObjectShortName">chk_D_ok_p</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/chk_A_ok_d" type="logic">
+      <obj_property name="ElementShortName">chk_A_ok_d</obj_property>
+      <obj_property name="ObjectShortName">chk_A_ok_d</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/chk_B_ok_d" type="logic">
+      <obj_property name="ElementShortName">chk_B_ok_d</obj_property>
+      <obj_property name="ObjectShortName">chk_B_ok_d</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/chk_C_ok_d" type="logic">
+      <obj_property name="ElementShortName">chk_C_ok_d</obj_property>
+      <obj_property name="ObjectShortName">chk_C_ok_d</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/chk_D_ok_d" type="logic">
+      <obj_property name="ElementShortName">chk_D_ok_d</obj_property>
+      <obj_property name="ObjectShortName">chk_D_ok_d</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/chk_A_ok_s" type="logic">
+      <obj_property name="ElementShortName">chk_A_ok_s</obj_property>
+      <obj_property name="ObjectShortName">chk_A_ok_s</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/chk_B_ok_s" type="logic">
+      <obj_property name="ElementShortName">chk_B_ok_s</obj_property>
+      <obj_property name="ObjectShortName">chk_B_ok_s</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/chk_C_ok_s" type="logic">
+      <obj_property name="ElementShortName">chk_C_ok_s</obj_property>
+      <obj_property name="ObjectShortName">chk_C_ok_s</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/chk_D_ok_s" type="logic">
+      <obj_property name="ElementShortName">chk_D_ok_s</obj_property>
+      <obj_property name="ObjectShortName">chk_D_ok_s</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider397">
+      <obj_property name="label">Predictor BTB 2-bits</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/PredF_0" type="logic">
+      <obj_property name="ElementShortName">PredF_0</obj_property>
+      <obj_property name="ObjectShortName">PredF_0</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/PredF_1" type="logic">
+      <obj_property name="ElementShortName">PredF_1</obj_property>
+      <obj_property name="ObjectShortName">PredF_1</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/PredD_0" type="logic">
+      <obj_property name="ElementShortName">PredD_0</obj_property>
+      <obj_property name="ObjectShortName">PredD_0</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/PredD_1" type="logic">
+      <obj_property name="ElementShortName">PredD_1</obj_property>
+      <obj_property name="ObjectShortName">PredD_1</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/PredE_0" type="logic">
+      <obj_property name="ElementShortName">PredE_0</obj_property>
+      <obj_property name="ObjectShortName">PredE_0</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/PredE_1" type="logic">
+      <obj_property name="ElementShortName">PredE_1</obj_property>
+      <obj_property name="ObjectShortName">PredE_1</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/c/CtrlE" type="logic">
+      <obj_property name="ElementShortName">CtrlE</obj_property>
+      <obj_property name="ObjectShortName">CtrlE</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/c/PCSrcE" type="logic">
+      <obj_property name="ElementShortName">PCSrcE</obj_property>
+      <obj_property name="ObjectShortName">PCSrcE</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/MisE_0" type="logic">
+      <obj_property name="ElementShortName">MisE_0</obj_property>
+      <obj_property name="ObjectShortName">MisE_0</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/MisE_1" type="logic">
+      <obj_property name="ElementShortName">MisE_1</obj_property>
+      <obj_property name="ObjectShortName">MisE_1</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/RedirectE" type="logic">
+      <obj_property name="ElementShortName">RedirectE</obj_property>
+      <obj_property name="ObjectShortName">RedirectE</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/PCTargetE" type="array">
+      <obj_property name="ElementShortName">PCTargetE[31:0]</obj_property>
+      <obj_property name="ObjectShortName">PCTargetE[31:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/CorrectPCE" type="array">
+      <obj_property name="ElementShortName">CorrectPCE[31:0]</obj_property>
+      <obj_property name="ObjectShortName">CorrectPCE[31:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider411">
+      <obj_property name="label">Escritura en registros</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/c/RegWriteW_0" type="logic">
+      <obj_property name="ElementShortName">RegWriteW_0</obj_property>
+      <obj_property name="ObjectShortName">RegWriteW_0</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/RdW_0" type="array">
+      <obj_property name="ElementShortName">RdW_0[4:0]</obj_property>
+      <obj_property name="ObjectShortName">RdW_0[4:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/ResultW_0" type="array">
+      <obj_property name="ElementShortName">ResultW_0[31:0]</obj_property>
+      <obj_property name="ObjectShortName">ResultW_0[31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/c/RegWriteW_1" type="logic">
+      <obj_property name="ElementShortName">RegWriteW_1</obj_property>
+      <obj_property name="ObjectShortName">RegWriteW_1</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/RdW_1" type="array">
+      <obj_property name="ElementShortName">RdW_1[4:0]</obj_property>
+      <obj_property name="ObjectShortName">RdW_1[4:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/ResultW_1" type="array">
+      <obj_property name="ElementShortName">ResultW_1[31:0]</obj_property>
+      <obj_property name="ObjectShortName">ResultW_1[31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider418">
+      <obj_property name="label">Memoria de datos</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/c/MemWriteM" type="logic">
+      <obj_property name="ElementShortName">MemWriteM</obj_property>
+      <obj_property name="ObjectShortName">MemWriteM</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/c/MemSelM" type="logic">
+      <obj_property name="ElementShortName">MemSelM</obj_property>
+      <obj_property name="ObjectShortName">MemSelM</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/DataAdrM" type="array">
+      <obj_property name="ElementShortName">DataAdrM[31:0]</obj_property>
+      <obj_property name="ObjectShortName">DataAdrM[31:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/WriteDataM" type="array">
+      <obj_property name="ElementShortName">WriteDataM[31:0]</obj_property>
+      <obj_property name="ObjectShortName">WriteDataM[31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/ReadDataM" type="array">
+      <obj_property name="ElementShortName">ReadDataM[31:0]</obj_property>
+      <obj_property name="ObjectShortName">ReadDataM[31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider424">
+      <obj_property name="label">Registros clave Etapa D</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/rf/rf[25]" type="array">
+      <obj_property name="ElementShortName">[25][31:0]</obj_property>
+      <obj_property name="ObjectShortName">[25][31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/rf/rf[26]" type="array">
+      <obj_property name="ElementShortName">[26][31:0]</obj_property>
+      <obj_property name="ObjectShortName">[26][31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/rf/rf[27]" type="array">
+      <obj_property name="ElementShortName">[27][31:0]</obj_property>
+      <obj_property name="ObjectShortName">[27][31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/rf/rf[28]" type="array">
+      <obj_property name="ElementShortName">[28][31:0]</obj_property>
+      <obj_property name="ObjectShortName">[28][31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/rf/rf[29]" type="array">
+      <obj_property name="ElementShortName">[29][31:0]</obj_property>
+      <obj_property name="ObjectShortName">[29][31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/rf/rf[30]" type="array">
+      <obj_property name="ElementShortName">[30][31:0]</obj_property>
+      <obj_property name="ObjectShortName">[30][31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_ef/u_prof/bp/rv/dp/rf/rf[31]" type="array">
+      <obj_property name="ElementShortName">[31][31:0]</obj_property>
+      <obj_property name="ObjectShortName">[31][31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+</wave_config>
+
